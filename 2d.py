@@ -24,7 +24,7 @@ from scipy.interpolate import interp2d
 # f = lambda x: numpy.exp(x)
 
 # Problem setup
-m = 15
+# m = 15
 a = 0.0
 b = 2.0 * numpy.pi
 u_a = 0.0
@@ -90,7 +90,10 @@ def solve_jacobi(X, Y, alpha_x, beta_x, alpha_y, beta_y, f, iterations_J=None, U
 
 
 def main():
-    mg_list = [1,2,4,10,20, 40, 80, 1000]
+    mg_list = [2, 4, 10, 20, 40, 80, 1000]
+    m = 15
+    # m_list = [15, 31, 127]
+    # mg_list = [2]
     # mg_iterations = 2
     for mg_iterations in mg_list:
         # delta_x = 1.0 / (m + 1)
@@ -133,29 +136,29 @@ def main():
         # X_list = [X1 ,X2 ,X3 ,X4 ,X5 ,X6 ,X7]
         # Y_list = [Y1 ,Y2 ,Y3 ,Y4 ,Y5 ,Y6 ,Y7]
 
-        U_list = [U1, U7]
-        X_list = [X1, X7]
-        Y_list = [Y1, Y7]
+        # U_list = [U1, U7]
+        # X_list = [X1, X7]
+        # Y_list = [Y1, Y7]
 
-        plot_list = zip(U_list, X_list, Y_list)
+        # plot_list = zip(U_list, X_list, Y_list)
         # for u, x, y in plot_list:
 
-            # fig = plt.figure()
-            # fig.set_figwidth(fig.get_figwidth())
-            # axes = fig.add_subplot(1, 2, 1, aspect='equal')
-            # plot = axes.pcolor(x, y, u, vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
-            # fig.colorbar(plot, label="$U$")
-            # axes.set_title("Computed Solution")
-            # axes.set_xlabel("x")
-            # axes.set_ylabel("y")
-            # axes = fig.add_subplot(1, 2, 2, aspect='equal')
-            # plot = axes.pcolor(x, y, u_true(x, y), vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
-            # fig.colorbar(plot, label="$u(x,t)$")
-            # axes.set_title("True Solution")
-            # axes.set_xlabel("x")
-            # axes.set_ylabel("y")
+        #     fig = plt.figure()
+        #     fig.set_figwidth(fig.get_figwidth())
+        #     axes = fig.add_subplot(1, 2, 1, aspect='equal')
+        #     plot = axes.pcolor(x, y, u, vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
+        #     fig.colorbar(plot, label="$U$")
+        #     axes.set_title("Computed Solution")
+        #     axes.set_xlabel("x")
+        #     axes.set_ylabel("y")
+        #     axes = fig.add_subplot(1, 2, 2, aspect='equal')
+        #     plot = axes.pcolor(x, y, u_true(x, y), vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
+        #     fig.colorbar(plot, label="$u(x,t)$")
+        #     axes.set_title("True Solution")
+        #     axes.set_xlabel("x")
+        #     axes.set_ylabel("y")
 
-        U1, X1, Y1 = solve_jacobi(X, Y, alpha_x, beta_x, alpha_y, beta_y, f, 7*mg_iterations)
+        U1, X1, Y1 = solve_jacobi(X, Y, alpha_x, beta_x, alpha_y, beta_y, f, mg_iterations)
 
         # fig = plt.figure()
         # fig.set_figwidth(fig.get_figwidth())
@@ -173,12 +176,12 @@ def main():
         # axes.set_ylabel("y")
 
         plt.show()
-
+        print ''
         error = numpy.linalg.norm(U1 - u_true(X1, Y1), ord=2)
-        print error
+        print 'no multigrid', error
 
         error = numpy.linalg.norm(U7 - u_true(X7, Y7), ord=2)
-        print error
+        print 'MG', error
 
 if __name__ == "__main__":
     main()

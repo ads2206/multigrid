@@ -34,6 +34,70 @@ def interp(x_fine, x_coarse, f):
 # Adapted from 06_iterative.ipynb by Prof. Kyle Mandli
 ########
 
+
+def solve_iterative(U, f, m, a, b, u_a, u_b):
+    # Descretization
+    x_bc = numpy.linspace(a, b, m + 2)
+    x = x_bc[1:-1]
+    delta_x = (b - a) / (m + 1)
+
+    for i in xrange(1, m + 1):
+        U[i] = 0.5 * (U[i+1] + U[i-1]) - f(x_bc[i]) * delta_x**2 / 2.0
+
+    return U
+
+def solve_exact(U, f, A, m, a, b, u_a, u_b):
+    # Descretization
+    x_bc = numpy.linspace(a, b, m + 2)
+    x = x_bc[1:-1]
+    delta_x = (b - a) / (m + 1)
+    
+    # # Construct matrix A
+    # e = numpy.ones(m)
+    # A = sparse.spdiags([e, -2*e, e], [-1,0,1], m, m).tocsr()
+    # A /= delta_x**2 
+
+    # Boundary conditions
+    B = f(x)
+    B[0] -= u_a / delta_x**2
+    B[-1] -= u_b / delta_x**2 
+
+    # Solve with linalg.solve()
+    U[1:-1] = sparse.linalg.spsolve(A, B)
+
+    return U
+
+
+def solve_multi(U, f, m, a, b, u_a, u_b, level, max_level=4):
+    # Descretization
+    x_bc = numpy.linspace(a, b, m + 2)
+    x = x_bc[1:-1]
+    delta_x = (b - a) / (m + 1)
+
+    # Construct matrix A
+    e = numpy.ones(m)
+    A = sparse.spdiags([e, -2*e, e], [-1,0,1], m, m).tocsr()
+    A /= delta_x**2 
+
+    if level == max_level: 
+        return solve_exact(U, f, A, m, a, b, u_a, u_b)
+    
+    else: 
+        # for j in range(vdown)
+        residue = f(x_bc) - A.dot(U)
+
+        ### restriction matrix could be implemented insted of [::2]
+        d = solve_multi(numpy.zeros(m/2 +2), residue[::2], m/2, a, b, u_a, u_b, level + 1)
+        d = interp(x_bc, x_bc[::2], d)
+
+        U += d
+
+        for j in range(2): ### should be num interations on v_up
+            U = solve_iterative(U, f, m, a, b, u_a, u_b)
+
+    return U
+
+
 def solve_jacobi(m, a, b, u_a, u_b, f, iterations_J=None, U_0=None):
 
 
