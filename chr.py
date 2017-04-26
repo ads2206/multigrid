@@ -12,27 +12,23 @@ from matplotlib import pyplot as plt
 import scipy.sparse as sparse
 
 # # Problem setup
-# m = 15
-# a = 0.0
-# b = 1.0
-# u_a = 0.0
-# u_b = 3.0
-# f = lambda x: numpy.exp(x)
-
-# Problem setup
 m = 15
 a = 0.0
-b = 2.0 * numpy.pi
+b = 1.0
 u_a = 0.0
-u_b = 0.0
-f = lambda x: - numpy.sin(x)
+u_b = 3.0
+f = lambda x: numpy.exp(x)
+
+# Problem setup
+# m = 15
+# a = 0.0
+# b = 2.0 * numpy.pi
+# u_a = 0.0
+# u_b = 0.0
+# f = lambda x: - numpy.sin(x)
 
 def interp(x_fine, x_coarse, f):
     return numpy.interp(x_fine, x_coarse, f)
-
-########
-# Adapted from 06_iterative.ipynb by Prof. Kyle Mandli
-########
 
 
 def solve_iterative(U, f, m, a, b, u_a, u_b):
@@ -46,7 +42,7 @@ def solve_iterative(U, f, m, a, b, u_a, u_b):
 
     return U
 
-def solve_exact(U, f, A, m, a, b, u_a, u_b):
+def solve_exact(U, f, A, m, a, b, u_a, u_b, rhs=None):
     # Descretization
     x_bc = numpy.linspace(a, b, m + 2)
     x = x_bc[1:-1]
@@ -58,17 +54,20 @@ def solve_exact(U, f, A, m, a, b, u_a, u_b):
     # A /= delta_x**2 
 
     # Boundary conditions
-    B = f(x)
+    if rhs == None:
+        B = f(x)
+    else:
+        B = rhs[1:-1]
     B[0] -= u_a / delta_x**2
     B[-1] -= u_b / delta_x**2 
 
     # Solve with linalg.solve()
-    U[1:-1] = sparse.linalg.spsolve(A, B)
+    U[1:-1] = numpy.linalg.solve(A, B)
 
     return U
 
 
-def solve_multi(U, f, m, a, b, u_a, u_b, level, max_level=4):
+def solve_multi(U, f, m, a, b, u_a, u_b, level, max_level=4, rhs = None):
     # Descretization
     x_bc = numpy.linspace(a, b, m + 2)
     x = x_bc[1:-1]
@@ -76,107 +75,49 @@ def solve_multi(U, f, m, a, b, u_a, u_b, level, max_level=4):
 
     # Construct matrix A
     e = numpy.ones(m)
-    A = sparse.spdiags([e, -2*e, e], [-1,0,1], m, m).tocsr()
+    A = sparse.spdiags([e, -2*e, e], [-1,0,1], m, m).toarray()
     A /= delta_x**2 
 
     if level == max_level: 
-        return solve_exact(U, f, A, m, a, b, u_a, u_b)
+        return solve_exact(U, f, A, m, a, b, u_a, u_b, rhs), x_bc
     
     else: 
         # for j in range(vdown)
-        residue = f(x_bc) - A.dot(U)
+        if rhs is None:
+            residue = numpy.zeros(m+2)
+            residue[1:-1] = f(x) - numpy.dot(A, U[1:-1])
+        else:
+            residue = numpy.zeros(m+2)
+            residue[1:-1] = rhs[1:-1] - numpy.dot(A, U[1:-1])
 
         ### restriction matrix could be implemented insted of [::2]
-        d = solve_multi(numpy.zeros(m/2 +2), residue[::2], m/2, a, b, u_a, u_b, level + 1)
+        d, junk = solve_multi(numpy.zeros(m/2 +2), f, m/2, a, b, u_a, u_b, level + 1, rhs = residue[::2])
         d = interp(x_bc, x_bc[::2], d)
 
         U += d
 
-        for j in range(2): ### should be num interations on v_up
+        for j in range(10): ### should be num interations on v_up
             U = solve_iterative(U, f, m, a, b, u_a, u_b)
-
-    return U
-
-
-def solve_jacobi(m, a, b, u_a, u_b, f, iterations_J=None, U_0=None):
-
-
-    # Descretization
-    x_bc = numpy.linspace(a, b, m + 2)
-    x = x_bc[1:-1]
-    delta_x = (b - a) / (m + 1)
-
-    # Expected iterations needed
-    if iterations_J == None:
-        iterations_J = int(2.0 * numpy.log(delta_x) / numpy.log(1.0 - 0.5 * numpy.pi**2 * delta_x**2))
-    # iterations_J = 2
-
-    # Solve system
-    # Initial guess for iterations
-
-    if U_0 != None:
-        U_new = U_0
-        if m < len(U_0) - 2:
-            U_new = U_new[::2]
-        if m > len(U_0) - 2:
-            U_new = interp(x_bc, x_bc[::2], U_0)
-    else:
-        U_new = numpy.zeros(m + 2)
-        U_new[0] = u_a
-        U_new[-1] = u_b
-
-    ### Iterations at this stage should be V_down
-    for k in xrange(iterations_J):
-        U = U_new.copy()
-        for i in xrange(1, m + 1):
-            U_new[i] = 0.5 * (U[i+1] + U[i-1]) - f(x_bc[i]) * delta_x**2 / 2.0
-
-    ### Handle Residual
-
-    ### Iterations at this stage should be V_up
-
 
     return U, x_bc
 
 
+
 def main():
     mg_iterations = 2
-    # u_true = lambda x: (4.0 - numpy.exp(1.0)) * x - 1.0 + numpy.exp(x)
+    u_true = lambda x: (4.0 - numpy.exp(1.0)) * x - 1.0 + numpy.exp(x)
     
-    u_true = lambda x: numpy.sin(x)
-    
-    error_mg = []
-    no_mg_error = []
-    # mg_list = [2,10,20,50,100,500, 1000]
-    mg_list = [2]
-    for mg_iterations in mg_list:
+    # u_true = lambda x: numpy.sin(x)
 
-        U1, x_bc1 = solve_jacobi(m, a, b, u_a, u_b, f, mg_iterations)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc1) - U1, ord=2))
 
-        U2, x_bc2 = solve_jacobi(m/2, a, b, u_a, u_b, f, mg_iterations, U1)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc2) - U2, ord=2))
+    U1, x_bc1 = solve_multi(numpy.zeros(m+2), f, m, a, b, u_a, u_b, 1)
+    # error_mg.append(numpy.linalg.norm(u_true(x_bc1) - U1, ord=2))
 
-        U3, x_bc3 = solve_jacobi(m/4, a, b, u_a, u_b, f, mg_iterations, U2)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc3) - U3, ord=2))
+    U2, x_bc2 = solve_multi(U1[::2], f, m/2, a, b, u_a, u_b, 2)
 
-        U4, x_bc4 = solve_jacobi(m/8, a, b, u_a, u_b, f, mg_iterations, U3)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc4) - U4, ord=2))
+    U3, x_bc3 = solve_multi(U2[::2], f, m/4, a, b, u_a, u_b, 3)
 
-        U5, x_bc5 = solve_jacobi(m/4, a, b, u_a, u_b, f, mg_iterations, U4)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc5) - U5, ord=2))
-
-        U6, x_bc6 = solve_jacobi(m/2, a, b, u_a, u_b, f, mg_iterations, U5)
-        # error_mg.append(numpy.linalg.norm(u_true(x_bc6) - U6, ord=2))
-
-        U7, x_bc7 = solve_jacobi(m, a, b, u_a, u_b, f, mg_iterations, U6)
-        error_mg.append(numpy.linalg.norm(u_true(x_bc7) - U7, ord=2))
-
-        U_J, x_bc_J = solve_jacobi(m, a, b, u_a, u_b, f, 2*mg_iterations)
-        no_mg_error.append(numpy.linalg.norm(u_true(x_bc_J) - U_J, ord=2))
-
-    # print len(error_mg)
-
+    U4, x_bc4 = solve_multi(U3[::2], f, m/8, a, b, u_a, u_b, 4)
 
     # Plot result
     fig = plt.figure()
@@ -185,9 +126,9 @@ def main():
     axes.plot(x_bc2, U2, '-ob', label="m=7")
     axes.plot(x_bc3, U3, '-oy', label="m=3")
     axes.plot(x_bc4, U4, '-og', label="m=1") 
-    axes.plot(x_bc5, U5, '-oy', label="m=3") 
-    axes.plot(x_bc6, U6, '-ob', label="m=7") 
-    axes.plot(x_bc7, U7, '-or', label="m=15") 
+    # axes.plot(x_bc5, U5, '-oy', label="m=3") 
+    # axes.plot(x_bc6, U6, '-ob', label="m=7") 
+    # axes.plot(x_bc7, U7, '-or', label="m=15") 
 
     axes.plot(x_bc1, u_true(x_bc1), 'k', label="True")
     axes.set_title("Solution to $u_{xx} = e^x$")
@@ -195,21 +136,21 @@ def main():
     axes.set_ylabel("u(x)")
     axes.legend(loc=2)
 
-    fig = plt.figure()
-    # fig.set_figwidth(fig.get_figwidth() * 2)
-    axes = fig.add_subplot(1, 1, 1)
-    axes.semilogy(mg_list, error_mg, 'or')
-    axes.semilogy(mg_list, no_mg_error, 'ob')
-    # axes.semilogy(range(iterations_J), numpy.ones(iterations_J) * delta_x**2, 'r--')
-    axes.set_title("Subsequent Step Size - J")
-    axes.set_xlabel("Iteration")
-    axes.set_ylabel("$||U^{(k)} - U^{(k-1)}||_2$")
-    # axes = fig.add_subplot(1, 2, 2)
-    # axes.semilogy(range(iterations_J), convergence_J, 'o')
-    # axes.semilogy(range(iterations_J), numpy.ones(iterations_J) * delta_x**2, 'r--')
-    # axes.set_title("Convergence to True Solution - J")
+    # fig = plt.figure()
+    # # fig.set_figwidth(fig.get_figwidth() * 2)
+    # axes = fig.add_subplot(1, 1, 1)
+    # # axes.semilogy(mg_list, error_mg, 'or')
+    # # axes.semilogy(mg_list, no_mg_error, 'ob')
+    # # axes.semilogy(range(iterations_J), numpy.ones(iterations_J) * delta_x**2, 'r--')
+    # axes.set_title("Subsequent Step Size - J")
     # axes.set_xlabel("Iteration")
-    # axes.set_ylabel("$||u(x) - U^{(k-1)}||_2$")
+    # axes.set_ylabel("$||U^{(k)} - U^{(k-1)}||_2$")
+    # # axes = fig.add_subplot(1, 2, 2)
+    # # axes.semilogy(range(iterations_J), convergence_J, 'o')
+    # # axes.semilogy(range(iterations_J), numpy.ones(iterations_J) * delta_x**2, 'r--')
+    # # axes.set_title("Convergence to True Solution - J")
+    # # axes.set_xlabel("Iteration")
+    # # axes.set_ylabel("$||u(x) - U^{(k-1)}||_2$")
 
     plt.show()
 
