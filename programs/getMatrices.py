@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
-def get_T(n):
+def get_T(n, dim=1):
 	'''
 	Parameters/Arguments
 	n: the number of discretizations within the interval [a,b]
@@ -15,21 +15,23 @@ def get_T(n):
 	coarse to fine interpolation
 	9 by 5
 	'''
-	T = np.zeros((2*n -1, n ))
-	 #iterate row by row
-	j = k = 0
-	for i in range(T.shape[0]):
-		if (i % 2) == 0:
-			T[i, j] = 1
-			j += 1
-		else:
-			T[i, k] = .5
-			T[i, k+1] = .5
-			k+=1
-	#T[0, :] = 0; T[0,0] = 1; T[-1,:] = 0; T[-1,-1] = 1
-	return T
+	if dim == 1:
+		T = np.zeros((2*n -1, n ))
+		 #iterate row by row
+		j = k = 0
+		for i in range(T.shape[0]):
+			if (i % 2) == 0:
+				T[i, j] = 1
+				j += 1
+			else:
+				T[i, k] = .5
+				T[i, k+1] = .5
+				k+=1
+		return T
+	elif dim == 2:
+		return T
 
-def get_R(n):
+def get_R(n, dim=1):
 	''' 
 	Parameters/Arguments
 	n: the number of discretizations within the interval [a, b]
@@ -44,12 +46,16 @@ def get_R(n):
 
 	fine to coarse restriction
 	'''
-	row = range(n)
-	col = [2*i for i in row]
+	if dim == 1;
+		row = range(n)
+		col = [2*i for i in row]
 
-	R = np.zeros((n, 2*n-1))
-	R[row, col] = 1
-	return R
+		R = np.zeros((n, 2*n-1))
+		R[row, col] = 1
+		return R
+	elif dim ==2:
+
+		return R
 		# potential 
 
 # grid 1: 17 discretizations (15 interior + 2 boundary)
