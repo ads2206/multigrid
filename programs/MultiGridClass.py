@@ -17,7 +17,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from getMatrices import get_T, get_R
 
-class MultiGridClass(self):
+class MultiGridClass:
     ''' Class to manage iterative PDE solvers with 
         multigrid approach '''
 
@@ -76,7 +76,7 @@ class MultiGridClass(self):
         fig = plt.figure()
         axes = fig.add_subplot(1, 1, 1)
         axes.plot(self.current_x, self.u)
-            axes.set_title("Title needed")
+        axes.set_title("Title needed")
         axes.set_xlabel("x")
         axes.set_ylabel("u(x)")
         axes.legend(loc=2)

@@ -46,7 +46,7 @@ def get_R(n, dim=1):
 
 	fine to coarse restriction
 	'''
-	if dim == 1;
+	if dim == 1:
 		row = range(n)
 		col = [2*i for i in row]
 
