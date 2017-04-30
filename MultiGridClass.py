@@ -21,7 +21,7 @@ class MultiGridClass(self):
     ''' Class to manage iterative PDE solvers with 
         multigrid approach '''
 
-    def __init__(self, x, U0, domain, f=0, bc=(0.0,0.0), solver='jacobi'):
+    def __init__(self, x, U0, domain, f, bc=(0.0,0.0), solver='jacobi'):
         # array: grid descritization
         self.x = x
         self.current_x = x
