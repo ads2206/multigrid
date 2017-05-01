@@ -20,7 +20,7 @@ class MultiGrid2D:
     ''' Class to manage iterative PDE solvers with 
         multigrid approach '''
 
-    def __init__(self, x, y, U0, domain, f, bc, solver='jacobi'):
+    def __init__(self, x, y, U0, domain, f, bc, u_true, solver='jacobi'):
         # array: grid descritization
         self.x = x
         self.y = y
@@ -48,6 +48,12 @@ class MultiGrid2D:
 
         # function: non-homogenous term
         self.f = f
+
+        # Error time!
+        # list of lists[ [iteration, error], ... ]
+        self.error = []
+        self.counter = 0    
+        self.u_true = u_true
 
     def restrict(self):
         ''' Fine to coarse grid using matrix R for projection '''
@@ -78,7 +84,7 @@ class MultiGrid2D:
         self.u[:, 0] = self.bc[0](self.current_y)
         self.u[:, -1] = self.bc[1](self.current_y)
 
-    def iterative_solver(self, num_times=2):
+    def iterative_solver(self, num_times=20):
         ''' Execute the interative solver to improve the solution u
         on current grid '''
         x_bc = self.current_x
@@ -89,6 +95,15 @@ class MultiGrid2D:
             for i in range(1, m + 1):
                 for j in range(1, m + 1):
                     self.u[i, j] = 0.25 * (self.u[i+1, j] + self.u[i-1, j] + self.u[i, j-1] + self.u[i, j+1]) - self.f(self.current_x[i], self.current_y[j]) * dx**2 / 4.0
+            self.counter += 1
+            self.error.append(self.get_error())
+
+    def plot_error(self):
+        ''' plot the error agains the interation count.'''
+        fig = plt.figure()
+        fig.set_figwidth(fig.get_figwidth())
+        axes = fig.add_subplot(1, 1, 1)
+        axes.plot(self.error)
 
     def plot(self, u_true, u_test):
         ''' Plot u(x) '''
@@ -144,12 +159,12 @@ class MultiGrid2D:
 
         plt.show()
 
-    def get_error(self, u_true):
+    def get_error(self):
         X, Y = np.meshgrid(self.current_x, self.current_y)
 
-        return np.linalg.norm(self.u-u_true(X,Y), ord=np.infty)
+        return np.linalg.norm(self.u-self.u_true(X,Y), ord=np.infty)
 
-    def v_sched(self, num_down=2, num_up=2, u_true=None):
+    def v_sched(self, num_down=3, num_up=3, u_true=None):
         def print_error():
             if u_true != None:
                 print 'Error with mg', self.get_error(u_true)

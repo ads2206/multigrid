@@ -29,4 +29,20 @@ beta_y = lambda x: np.exp(x + 0.5)
 bc = (alpha_x, beta_x, alpha_y, beta_y)
 
 
-mg_grid = MultiGrid2D(x, y, U0, domain, f, bc)
+mg_grid = MultiGrid2D(x, y, U0, domain, f, bc, u_true)
+static_grid = MultiGrid2D(x, y, U0, domain, f, bc, u_true)
+
+static_grid.iterative_solver(150)
+mg_grid.v_sched()
+# mg_grid.v_sched()
+# mg_grid.v_sched()
+mg_grid.v_sched()
+
+
+fig = plt.figure()
+fig.set_figwidth(fig.get_figwidth())
+axes = fig.add_subplot(1, 1, 1)
+axes.semilogy(mg_grid.error[::3], label='MultiGrid')
+axes.semilogy(static_grid.error[::3], label='regular Jacobi')
+axes.legend()
+plt.show()
