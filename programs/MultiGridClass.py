@@ -20,11 +20,12 @@ import scipy.sparse as sparse
 from getMatrices import get_T, get_R
 
 class MultiGridClass:
-    ''' Class to manage iterative PDE solvers with 
-        multigrid approach '''
-
+    ''' 
+    Class to manage iterative PDE solvers with 
+    multigrid approach
+    '''
     def __init__(self, x, U0, domain, f, bc=(0.0,0.0), solver='jacobi'):
-        # array: grid descritization
+        # array: grid discritization
         self.x = x
         self.current_x = x
         self.level = 1
@@ -46,23 +47,38 @@ class MultiGridClass:
         self.f = f
 
         ### NEEDS WORK FOR RELAXING ERROR
+        
         # Some matrices to keep around:
-        # self.max_levels = np.log2(len(x)-1)
-        # assert(self.max_levels % 1 == 0)
-        # self.max_levels = int(self.max_levels)
-        # A_list = []
-        # # Store matrix A
-        # mat_size = len(x) - 2
-        # e = np.ones(mat_size)
-        # A = sparse.spdiags([e, -2*e, e], [-1,0,1], mat_size, mat_size).toarray()
-        # A /= (x[1] - x[0])**2 
-        # A_list.append(A)
 
-        # for i in xrange(self.max_levels):
-        #     A_list.append(np.dot(get_R(len(A_list[-1])/2), np.dot(A_list[-1], get_T(len(A_list[-1])/2+1))))
+        # make sure that the discretization is acceptable
+        # we can only have discretizations of the form 
+        # 2^j + 1, for j = [1, 2, ...]
+        # [1, 3, 5, 9, 17, 33]
+        self.max_levels = np.log2(len(x)-1)
+        assert(self.max_levels % 1 == 0.0) 
+        self.max_levels = int(self.max_levels)
+        A_list = []
 
-        # for a in A_list:
-        #     print a
+        # Store matrix A
+        # matrix is square and only includes interior points
+        mat_size = len(x)-2
+        e = np.ones(mat_size)
+        A = sparse.spdiags([e, -2*e, e], [-1,0,1], mat_size, mat_size).toarray()
+        A /= (x[1] - x[0])**2 
+        A_list.append(A)
+
+        for i in xrange(self.max_levels):
+             # source: strang
+             print(len(A_list[-1]))
+             nextSize = .5 * (len(A_list[-1]) - 1) + 1
+             print(nextSize)
+             newR = get_R(nextSize) 
+             newT = get_T(nextSize)
+             print(np.dot(A_list[-1], newT ))
+             A_list.append(np.dot(newR, np.dot(A_list[-1], newT ) ))
+
+        for a in A_list:
+            print a
 
 
     def restrict(self):

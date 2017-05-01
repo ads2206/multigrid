@@ -2,6 +2,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
+# def get_Rint(numInt, dim=1):
+# 	'''
+# 	numInt: number of interior points in [a,b]
+# 	'''
+
+
+
+
+
+
+def get_Tint(numInt, dim=1):
+	'''
+	numInt: number of interior points in [a,b]
+	'''
+	T_int = np.zeros((2*numInt + 1, numInt))
+	for i range(numInt):
+		T_int[2*i:2*i+3, i] = np.array([.5, 1., .5])
+	return T_int
+
+def get_Rint(numInt, dim=1):
+	# double check this
+	return .5*get_Tint(numInt).T
 def get_T(n, dim=1):
 	'''
 	Parameters/Arguments
@@ -74,10 +96,11 @@ def get_R(n, dim=1):
 def main():
 
 	# 1-d Testing
-	n = 3
+	n = 5
 	T = get_T(n, dim=1)
 	R = get_R(n, dim=1)
-	x = np.linspace(0, 1, 2*n-1)
+	
+	x = np.linspace(0, 1, n)
 	print("input vector: ", x)
 	print("Restriction.    R dot x: ", np.dot(R, x))
 	
@@ -86,8 +109,12 @@ def main():
 	print("Interpolation.  T dot x: ", np.dot(T, x))
 
 	#2-d Testing 
+	x = 2.*np.ones((2*n-1)**2)
 	T_2d = get_T(n, dim=2)
 	R_2d = get_R(n, dim=2)
+	out =np.dot(R_2d, x).reshape(n, n)
+	print(out[0,:], out[-1,:], out[:,0], out[:, -1])
+	print(out[1:-1][:, 1:-1])
 
 if __name__ == "__main__":
 	main()
