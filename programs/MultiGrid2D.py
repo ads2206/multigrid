@@ -10,33 +10,33 @@
 
 ####
 # MultiGridClass
-# one dimensional for now.
+# 2D version
 ####
-
 import numpy as np
 from matplotlib import pyplot as plt
-import scipy.sparse as sparse
-
 from getMatrices import get_T, get_R
 
-class MultiGridClass:
+class MultiGrid2D:
     ''' Class to manage iterative PDE solvers with 
         multigrid approach '''
 
-    def __init__(self, x, U0, domain, f, bc=(0.0,0.0), solver='jacobi'):
+    def __init__(self, x, y, U0, domain, f, bc, solver='jacobi'):
         # array: grid descritization
         self.x = x
+        self.y = y
         self.current_x = x
+        self.current_y = y
+
         self.level = 1
         # self.y (to be added for 2d problems)
 
-        # array: solution
+        # 2D array: solution
         self.u = U0
 
-        # tuple: domain endpoints (x0, x1)
+        # tuple: domain endpoints (x0, x1, y0, y1)
         self.domain = domain
 
-        # tuple: Boundary conditions (alpha, beta)
+        # tuple of functions: Boundary conditions (alpha(x), beta(y))
         self.bc = bc
 
         # String: iterative method name ex: 'jacobi'
@@ -44,26 +44,6 @@ class MultiGridClass:
 
         # function: non-homogenous term
         self.f = f
-
-        ### NEEDS WORK FOR RELAXING ERROR
-        # Some matrices to keep around:
-        # self.max_levels = np.log2(len(x)-1)
-        # assert(self.max_levels % 1 == 0)
-        # self.max_levels = int(self.max_levels)
-        # A_list = []
-        # # Store matrix A
-        # mat_size = len(x) - 2
-        # e = np.ones(mat_size)
-        # A = sparse.spdiags([e, -2*e, e], [-1,0,1], mat_size, mat_size).toarray()
-        # A /= (x[1] - x[0])**2 
-        # A_list.append(A)
-
-        # for i in xrange(self.max_levels):
-        #     A_list.append(np.dot(get_R(len(A_list[-1])/2), np.dot(A_list[-1], get_T(len(A_list[-1])/2+1))))
-
-        # for a in A_list:
-        #     print a
-
 
     def restrict(self):
         ''' Fine to coarse grid using matrix R for projection '''
