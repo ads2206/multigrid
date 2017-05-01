@@ -56,9 +56,12 @@ class MultiGrid2D:
         self.current_x = self.current_x[::2]
         self.current_y = self.current_y[::2]
         self.level += 1
-        square = np.sqrt(len(self.u))
+        square = int(np.sqrt(len(self.u)))
         self.u = self.u.reshape((square,square))
-
+        self.u[0, :] = self.bc[2](self.current_x)
+        self.u[-1, :] = self.bc[3](self.current_x)
+        self.u[:, 0] = self.bc[0](self.current_y)
+        self.u[:, -1] = self.bc[1](self.current_y)
 
     def interpolate(self):
         ''' Coarse to fine grid using matrix T for interpolation '''
@@ -68,48 +71,83 @@ class MultiGrid2D:
         jump = 2 ** (self.level - 1)
         self.current_x = self.x[::jump]
         self.current_y = self.y[::jump]
-        square = np.sqrt(len(self.u))
+        square = int(np.sqrt(len(self.u)))
         self.u = self.u.reshape((square,square))
+        self.u[0, :] = self.bc[2](self.current_x)
+        self.u[-1, :] = self.bc[3](self.current_x)
+        self.u[:, 0] = self.bc[0](self.current_y)
+        self.u[:, -1] = self.bc[1](self.current_y)
 
     def iterative_solver(self, num_times=2):
         ''' Execute the interative solver to improve the solution u
         on current grid '''
         x_bc = self.current_x
         x = x_bc[1:-1]
-        dx = x[1] - x[0]
+        dx = x_bc[1] - x_bc[0]
         m  = len(x)
         for k in range(num_times):
             for i in range(1, m + 1):
                 for j in range(1, m + 1):
                     self.u[i, j] = 0.25 * (self.u[i+1, j] + self.u[i-1, j] + self.u[i, j-1] + self.u[i, j+1]) - self.f(self.current_x[i], self.current_y[j]) * dx**2 / 4.0
 
-    def plot(self, u_true=None):
+    def plot(self, u_true, u_test):
         ''' Plot u(x) '''
         fig = plt.figure()
         fig.set_figwidth(fig.get_figwidth())
-        axes = fig.add_subplot(1, 1, 1)
+        axes = fig.add_subplot(2, 3, 1)
         plot = axes.pcolor(self.current_x, self.current_y, self.u, cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("Computed Solution - MG")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+
+        axes = fig.add_subplot(2, 3, 2)
+        X, Y = np.meshgrid(self.current_x, self.current_y)
+        plot = axes.pcolor(self.current_x, self.current_y, u_true(X, Y), cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("True Solution")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+
+        axes = fig.add_subplot(2, 3, 3)
+        X, Y = np.meshgrid(self.current_x, self.current_y)
+        plot = axes.pcolor(self.current_x, self.current_y, abs(u_true(X, Y)-self.u), cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("error")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+
+        fig.set_figwidth(fig.get_figwidth())
+        axes = fig.add_subplot(2, 3, 4)
+        plot = axes.pcolor(self.current_x, self.current_y, u_test, cmap=plt.get_cmap("Blues"))
         fig.colorbar(plot, label="$U$")
         axes.set_title("Computed Solution")
         axes.set_xlabel("x")
         axes.set_ylabel("y")
 
-        if u_true:
-            fig = plt.figure()
-            fig.set_figwidth(fig.get_figwidth())
-            axes = fig.add_subplot(1, 1, 1)
-            X, Y = np.meshgrid(self.current_x, self.current_y)
-            plot = axes.pcolor(self.current_x, self.current_y, u_true(X, Y), cmap=plt.get_cmap("Blues"))
-            fig.colorbar(plot, label="$U$")
-            axes.set_title("Computed Solution")
-            axes.set_xlabel("x")
-            axes.set_ylabel("y")
+        axes = fig.add_subplot(2, 3, 5)
+        X, Y = np.meshgrid(self.current_x, self.current_y)
+        plot = axes.pcolor(self.current_x, self.current_y, u_true(X, Y), cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("True Solution")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+
+        axes = fig.add_subplot(2, 3, 6)
+        X, Y = np.meshgrid(self.current_x, self.current_y)
+        plot = axes.pcolor(self.current_x, self.current_y, abs(u_true(X, Y)-u_test), cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("Error")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+
+
         plt.show()
 
     def get_error(self, u_true):
         X, Y = np.meshgrid(self.current_x, self.current_y)
 
-        return np.linalg.norm(self.u-u_true(X,Y))
+        return np.linalg.norm(self.u-u_true(X,Y), ord=np.infty)
 
     def v_sched(self, num_down=2, num_up=2, u_true=None):
         def print_error():
@@ -129,6 +167,9 @@ class MultiGrid2D:
             self.iterative_solver()
             print_error()
 
+
+    def test(self):
+        self.u[:,:] = 2.1
 
 
 
