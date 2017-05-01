@@ -29,9 +29,10 @@ def get_T(n, dim=1):
 				k+=1
 		return T
 	elif dim == 2:
+		import scipy.sparse as sparse
 		R_2d = get_R(n, dim=2)
 		# R_2d = .25 * T_2d^tranpose; source: strang
-		return 4.*R_2d.T
+		return 4.* R_2d.T
 
 def get_R(n, dim=1):
 	''' 
@@ -61,9 +62,10 @@ def get_R(n, dim=1):
 		# R[row, col] = 1
 		return R
 	elif dim == 2:
+
 		# 3 by 7 matrix R in 1d becomes a 9 by 49 
 		# restriction matrix R2D in 2-dim; source: Strang
-		return np.kron(R,R)
+		return np.kron(.5*R, 2.*R)
 
 # grid 1: 17 discretizations (15 interior + 2 boundary)
 # grid 2: 9 discretizations  ( 7 interior + 2 boundary)
@@ -72,24 +74,20 @@ def get_R(n, dim=1):
 def main():
 
 	# 1-d Testing
-	n = 5
+	n = 3
 	T = get_T(n, dim=1)
 	R = get_R(n, dim=1)
 	x = np.linspace(0, 1, 2*n-1)
 	print("input vector: ", x)
 	print("Restriction.    R dot x: ", np.dot(R, x))
+	
 	x = np.linspace(0, 1, n)
 	print("input vector: ", x)
 	print("Interpolation.  T dot x: ", np.dot(T, x))
 
-	# 2-d Testing 
+	#2-d Testing 
 	T_2d = get_T(n, dim=2)
 	R_2d = get_R(n, dim=2)
-	
-
-
-
-
 
 if __name__ == "__main__":
 	main()
