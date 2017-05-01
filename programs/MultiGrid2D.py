@@ -190,8 +190,8 @@ class MultiGrid2D:
         # axes.set_xlabel("x")
         # axes.set_ylabel("y")
 
-        plt.savefig("%s.pdf" % self.name)
-        #plt.show()
+        # plt.savefig("%s.pdf" % self.name)
+        plt.show()
 
     def get_error(self):
         X, Y = np.meshgrid(self.current_x, self.current_y)
@@ -203,14 +203,14 @@ class MultiGrid2D:
             if u_true != None:
                 print 'Error with mg', self.get_error(u_true)
 
-        # self.iterative_solver() 
-        self.step()
+        self.iterative_solver() 
+        # self.step()
         print_error()
 
         for i in xrange(num_down):
             self.restrict()
-            # self.iterative_solver() 
-            self.step()
+            self.iterative_solver() 
+            # self.step()
             print_error()
 
             # solve linear system exactly
@@ -230,8 +230,8 @@ class MultiGrid2D:
 
         for j in xrange(num_up):
             self.interpolate()
-            # self.iterative_solver() 
-            self.step()
+            self.iterative_solver() 
+            # self.step()
             print_error()
 
     def step(self, pre=1, post=1):
