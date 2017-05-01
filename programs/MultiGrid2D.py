@@ -32,10 +32,10 @@ class MultiGrid2D:
 
         # 2D array: solution
         self.u = U0
-        self.u[0, :] = bc[0](y)
-        self.u[-1, :] = bc[1](y)
-        self.u[:, 0] = bc[2](x)
-        self.u[:, -1] = bc[3](x)
+        self.u[0, :] = bc[2](x)
+        self.u[-1, :] = bc[3](x)
+        self.u[:, 0] = bc[0](y)
+        self.u[:, -1] = bc[1](y)
 
         # tuple: domain endpoints (x0, x1, y0, y1)
         self.domain = domain
@@ -52,20 +52,24 @@ class MultiGrid2D:
     def restrict(self):
         ''' Fine to coarse grid using matrix R for projection '''
         R = get_R(len(self.current_x[::2]), 2)
-        self.u = np.dot(R, self.u)
+        self.u = np.dot(R, self.u.reshape(len(self.u)**2))
         self.current_x = self.current_x[::2]
         self.current_y = self.current_y[::2]
         self.level += 1
+        square = np.sqrt(len(self.u))
+        self.u = self.u.reshape((square,square))
 
 
     def interpolate(self):
         ''' Coarse to fine grid using matrix T for interpolation '''
         self.level -= 1
         T = get_T(len(self.current_x), 2)
-        self.u = np.dot(T, self.u)
+        self.u = np.dot(T, self.u.reshape(len(self.u)**2))
         jump = 2 ** (self.level - 1)
         self.current_x = self.x[::jump]
         self.current_y = self.y[::jump]
+        square = np.sqrt(len(self.u))
+        self.u = self.u.reshape((square,square))
 
     def iterative_solver(self, num_times=2):
         ''' Execute the interative solver to improve the solution u
@@ -77,11 +81,9 @@ class MultiGrid2D:
         for k in range(num_times):
             for i in range(1, m + 1):
                 for j in range(1, m + 1):
-                    self.u[i, j] = 0.25 * (self.u[i+1, j] + self.u[i-1, j] \
-                        + self.u[i, j-1] + self.u[i, j+1]) \
-                        - f(self.current_x[i], self.current_y[j]) * dx**2 / 4.0
+                    self.u[i, j] = 0.25 * (self.u[i+1, j] + self.u[i-1, j] + self.u[i, j-1] + self.u[i, j+1]) - self.f(self.current_x[i], self.current_y[j]) * dx**2 / 4.0
 
-    def plot(self):
+    def plot(self, u_true=None):
         ''' Plot u(x) '''
         fig = plt.figure()
         fig.set_figwidth(fig.get_figwidth())
@@ -91,10 +93,23 @@ class MultiGrid2D:
         axes.set_title("Computed Solution")
         axes.set_xlabel("x")
         axes.set_ylabel("y")
+
+        if u_true:
+            fig = plt.figure()
+            fig.set_figwidth(fig.get_figwidth())
+            axes = fig.add_subplot(1, 1, 1)
+            X, Y = np.meshgrid(self.current_x, self.current_y)
+            plot = axes.pcolor(self.current_x, self.current_y, u_true(X, Y), cmap=plt.get_cmap("Blues"))
+            fig.colorbar(plot, label="$U$")
+            axes.set_title("Computed Solution")
+            axes.set_xlabel("x")
+            axes.set_ylabel("y")
         plt.show()
 
     def get_error(self, u_true):
-        return np.linalg.norm(self.u-u_true(self.current_x, self.current_y))
+        X, Y = np.meshgrid(self.current_x, self.current_y)
+
+        return np.linalg.norm(self.u-u_true(X,Y))
 
     def v_sched(self, num_down=2, num_up=2, u_true=None):
         def print_error():
