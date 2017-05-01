@@ -84,31 +84,17 @@ class MultiGrid2D:
     def plot(self):
         ''' Plot u(x) '''
         fig = plt.figure()
-        axes = fig.add_subplot(1, 1, 1)
-        axes.plot(self.current_x, self.u, label='u')
-        axes.set_title("Title needed")
-        axes.set_xlabel("x")
-        axes.set_ylabel("u(x)")
-        axes.legend(loc=2)
-        plt.show()
-
-        fig = plt.figure()
         fig.set_figwidth(fig.get_figwidth())
-        axes = fig.add_subplot(1, 2, 1, aspect='equal')
-        plot = axes.pcolor(x, y, u, vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
+        axes = fig.add_subplot(1, 1, 1)
+        plot = axes.pcolor(self.current_x, self.current_y, self.u, cmap=plt.get_cmap("Blues"))
         fig.colorbar(plot, label="$U$")
         axes.set_title("Computed Solution")
         axes.set_xlabel("x")
         axes.set_ylabel("y")
-        axes = fig.add_subplot(1, 2, 2, aspect='equal')
-        plot = axes.pcolor(x, y, u_true(x, y), vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
-        fig.colorbar(plot, label="$u(x,t)$")
-        axes.set_title("True Solution")
-        axes.set_xlabel("x")
-        axes.set_ylabel("y")
+        plt.show()
 
     def get_error(self, u_true):
-        return np.linalg.norm(self.u-u_true(self.current_x))
+        return np.linalg.norm(self.u-u_true(self.current_x, self.current_y))
 
     def v_sched(self, num_down=2, num_up=2, u_true=None):
         def print_error():
