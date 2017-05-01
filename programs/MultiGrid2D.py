@@ -32,11 +32,15 @@ class MultiGrid2D:
 
         # 2D array: solution
         self.u = U0
+        self.u[0, :] = bc[0](y)
+        self.u[-1, :] = bc[1](y)
+        self.u[:, 0] = bc[2](x)
+        self.u[:, -1] = bc[3](x)
 
         # tuple: domain endpoints (x0, x1, y0, y1)
         self.domain = domain
 
-        # tuple of functions: Boundary conditions (alpha(x), beta(y))
+        # tuple of functions: Boundary conditions (alpha_x(y), beta_x(y), alpha_y(x), beta_y(x))
         self.bc = bc
 
         # String: iterative method name ex: 'jacobi'
@@ -47,19 +51,21 @@ class MultiGrid2D:
 
     def restrict(self):
         ''' Fine to coarse grid using matrix R for projection '''
-        R = get_R(len(self.current_x[::2]))
+        R = get_R(len(self.current_x[::2]), 2)
         self.u = np.dot(R, self.u)
         self.current_x = self.current_x[::2]
+        self.current_y = self.current_y[::2]
         self.level += 1
 
 
     def interpolate(self):
         ''' Coarse to fine grid using matrix T for interpolation '''
         self.level -= 1
-        T = get_T(len(self.current_x))
+        T = get_T(len(self.current_x), 2)
         self.u = np.dot(T, self.u)
         jump = 2 ** (self.level - 1)
         self.current_x = self.x[::jump]
+        self.current_y = self.y[::jump]
 
     def iterative_solver(self, num_times=2):
         ''' Execute the interative solver to improve the solution u
@@ -68,9 +74,12 @@ class MultiGrid2D:
         x = x_bc[1:-1]
         dx = x[1] - x[0]
         m  = len(x)
-        for j in range(num_times):
+        for k in range(num_times):
             for i in range(1, m + 1):
-                self.u[i] = 0.5 * (self.u[i+1] + self.u[i-1]) - self.f(x_bc[i]) * dx**2 / 2.0
+                for j in range(1, m + 1):
+                    self.u[i, j] = 0.25 * (self.u[i+1, j] + self.u[i-1, j] \
+                        + self.u[i, j-1] + self.u[i, j+1]) \
+                        - f(self.current_x[i], self.current_y[j]) * dx**2 / 4.0
 
     def plot(self):
         ''' Plot u(x) '''
@@ -82,6 +91,21 @@ class MultiGrid2D:
         axes.set_ylabel("u(x)")
         axes.legend(loc=2)
         plt.show()
+
+        fig = plt.figure()
+        fig.set_figwidth(fig.get_figwidth())
+        axes = fig.add_subplot(1, 2, 1, aspect='equal')
+        plot = axes.pcolor(x, y, u, vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$U$")
+        axes.set_title("Computed Solution")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
+        axes = fig.add_subplot(1, 2, 2, aspect='equal')
+        plot = axes.pcolor(x, y, u_true(x, y), vmax=7.0, vmin=0.0, cmap=plt.get_cmap("Blues"))
+        fig.colorbar(plot, label="$u(x,t)$")
+        axes.set_title("True Solution")
+        axes.set_xlabel("x")
+        axes.set_ylabel("y")
 
     def get_error(self, u_true):
         return np.linalg.norm(self.u-u_true(self.current_x))
