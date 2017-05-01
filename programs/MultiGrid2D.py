@@ -15,7 +15,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from getMatrices import get_T, get_R
-
+import scipy.sparse as sparse
 class MultiGrid2D:
     ''' Class to manage iterative PDE solvers with 
         multigrid approach '''
@@ -26,6 +26,8 @@ class MultiGrid2D:
         self.y = y
         self.current_x = x
         self.current_y = y
+        # manually insert maximum level (coarsest mesh)
+        self.max_levels = 4
 
         self.level = 1
         # self.y (to be added for 2d problems)
@@ -176,6 +178,21 @@ class MultiGrid2D:
             self.restrict()
             self.iterative_solver()
             print_error()
+
+            # solve linear system exactly
+            # if self.level == self.max_levels:
+            #     mat_size = len(self.current_x) - 2
+            #     print mat_size
+            #     e = np.ones(mat_size)
+            #     A = sparse.spdiags([e, -2.*e, e], [-1,0,1], mat_size**2, mat_size**2).toarray()
+            #     A /= (self.current_x[1] - self.current_x[0])**2
+            #     xx, yy = np.meshgrid(self.current_x, self.current_y)
+            #     rhs = self.f(xx, yy)[1:-1,1:-1].reshape(mat_size**2)
+
+            #     tmp = np.linalg.solve(A, rhs)
+            #     self.u[1:-1,1:-1] = tmp.reshape(mat_size, mat_size)
+
+
 
         for j in xrange(num_up):
             self.interpolate()

@@ -29,10 +29,10 @@ beta_y = lambda x: np.exp(x + 0.5)
 bc = (alpha_x, beta_x, alpha_y, beta_y)
 
 
-mg_grid = MultiGrid2D(x, y, U0, domain, f, bc)
+mg_grid = MultiGrid2D(x, y, U0, domain, f, bc, u_true)
 
 # X, Y = np.meshgrid(x, y)
-static_grid = MultiGrid2D(x, y, U0, domain, f, bc)
+static_grid = MultiGrid2D(x, y, U0, domain, f, bc, u_true)
 static_grid.iterative_solver(24)
 
 # mg_grid.plot(u_true)
