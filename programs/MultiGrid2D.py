@@ -47,16 +47,17 @@ class MultiGrid2D:
 
     def restrict(self):
         ''' Fine to coarse grid using matrix R for projection '''
-        R = get_R(len(self.current_x[::2]))
+        R = get_R(len(self.current_x[::2]), 2)
         self.u = np.dot(R, self.u)
         self.current_x = self.current_x[::2]
+        self.current_y = self.current_y[::2]
         self.level += 1
 
 
     def interpolate(self):
         ''' Coarse to fine grid using matrix T for interpolation '''
         self.level -= 1
-        T = get_T(len(self.current_x))
+        T = get_T(len(self.current_x), 2)
         self.u = np.dot(T, self.u)
         jump = 2 ** (self.level - 1)
         self.current_x = self.x[::jump]
