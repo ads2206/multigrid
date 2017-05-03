@@ -19,6 +19,67 @@ import scipy.sparse as sparse
 
 from getMatrices import get_T, get_R, get_Tint, get_Rint
 
+def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
+        ''' Approximiating u system Au = rhs using an iterative method
+        *input*
+        u:  size total boundary, including endpoints, input is initial guess
+        rhs: size total boundary, including endpoints, input should be unchanged
+
+        *output*
+        u: size unchanges, but closer approximation to the solution'''
+        # Set omega for SOR
+        omega = 2.0/3.0
+
+        m  = len(rhs)
+        for j in range(num_iterations):
+            for i in range(1, m - 1):
+
+                # interior jacobi iteration
+                if self.solver=='GS':
+                    u[i] = 0.5 * (u[i-1] + u[i+1] - dx**2 * rhs[i])
+
+                elif self.solver=='SOR':
+                    u_gs = 0.5 * (u[i-1] + u[i+1] - dx**2 * rhs[i])    
+                    u[i] += omega * (u_gs - u[i])
+        return u
+
+def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, 
+                num_down=1, num_up=1, method='GS'):
+        
+    ## BASE CASE
+
+    u = iterative_solver(u, rhs, dx, num_iterations=num_pre, method='GS')
+    # Handle BC's
+    residue = rhs[1:-1] - np.dot(A, u[1:-1])
+    R = get_Rint(len(residue))
+    residue = np.dot(R, residue)
+
+    T = get_Tint(len(A[::2]))
+    A = nump.dot(R, np.dot(A, T)) #RAT 
+
+    e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, \
+                    num_down=num_down, num_up=num_up, method='GS')
+
+    e = np.dot(T, e)
+
+    u[1:-1] += e
+
+    for i in xrange(num_down):
+        # new_int = np.dot(R, u[1:-1])
+        new_u = np.zeros(len(u[::2]))
+        new_u[1:-1] = np.dot(R, u[1:-1])
+        new_u[0] = u[0]
+        new_u[-1] = u[-1]
+        new_rhs = np.dot(R, rhs)
+        
+        new_u = v_sched(new_u, A, new_rhs)
+
+    for j in xrange(num_up):
+        self.interpolate()
+        self.iterative_solver(num_times=num_post)
+        print_error()
+
+
 class MultiGridClass:
     ''' 
     Class to manage iterative PDE solvers with 
@@ -120,7 +181,7 @@ class MultiGridClass:
         u in beginning is init guess
         Execute the interative solver to improve the solution u
         on current grid '''
-        omega = 2.0/3.0
+        # omega = 2.0/3.0
         if rhs == None: 
             x_bc = self.current_x
             xx = x_bc[1:-1]
@@ -167,14 +228,17 @@ class MultiGridClass:
     def get_error(self, u_true):
         return np.linalg.norm(self.u-u_true(self.current_x))
 
-    def v_sched(self, num_pre = 2, num_post=2, 
+    def v_sched(self, num_pre=2, num_post=2, 
         num_down=1, num_up=1, u_true=None):
-        def print_error():
-            if u_true != None:
-                print 'Error with mg', self.get_error(u_true)
+        # def print_error():
+        #     if u_true != None:
+        #         print 'Error with mg', self.get_error(u_true)
 
-        self.iterative_solver()
-        print_error()
+        # Relax num_pre times
+        rhs = self.f(self.current_x)
+        dx = self.current_x[1] - self.current_x[0]
+        self.u = iterative_solver(self.u, rhs, dx, num_iterations=num_pre, method='GS')
+
 
         for i in xrange(num_down):
             self.restrict()
@@ -186,7 +250,7 @@ class MultiGridClass:
             self.iterative_solver(num_times=num_post)
             print_error()
     def solveCGC(self, num_pre = 2, num_post=2, 
-        num_down=1, num_up=1, u_true=None):
+                    num_down=1, num_up=1, u_true=None):
         ''' 
         Coarse Grid Correction Scheme 
         num_pre:  number of times pre-smoothing
