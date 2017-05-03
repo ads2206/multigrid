@@ -31,147 +31,197 @@
 \input{./title.tex}
 \vspace{2 cm}
 %-- Sections correspond to problem numbers --%
-\section*{}
+\section*{Abstract}
 
-\paragraph{Part 1:} First, you are provided \emph{only} with the temperature data and the days on which the apparatus was not working. You are asked to find an estimate of the temperature on the missing days. 
-
-\subparagraph{a)} 
-
-\subparagraph{b)} 
-
-$$
-\rowcolors{2}{gray!25}{white}
-\begin{tabular}{ r  l || r  l }  
-Day & Temp. & Day & Temp. \\ \hline
-22 & 48.6544 & 91 & 32.6699 \\
-
-80 & 29.9413 &  92 & 32.7286 \\
-
-81 & 30.3790 & 224 & 80.9063 \\
-
-82 & 30.7736 & 225 & 81.5233 \\
-
-83 & 31.1268 & 226 & 82.1234 \\
-
-84 & 31.4403 & 228 & 83.2654 \\
-
-85 & 31.7158 & 229 & 83.8043 \\
-
-86 & 31.9551 & 230 & 84.3201 \\
-
-87 & 32.1600 & 231 & 84.8117 \\
-
-88 & 32.3322 & 232 & 85.2780 \\
-
-89 & 32.4734 & 233 & 85.7178 \\
-
-90 & 32.5854 & 300 & 88.8952 \\ \hline
-\end{tabular}
-$$
-
-%-- Next problem: --%
-\section*{}
-
-\paragraph{Part 2:} 
-
-\subparagraph{a)} 
-$$
-\rowcolors{2}{gray!25}{white}
-\begin{tabular}{ r c c || r c c }  
-Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
-22 & 48.6544 & 0.0093 & 91 & 32.6699 & 22.4093 \\
-
-80 & 29.9413 & 22.4093 &  92 & 32.7286 & 22.4093 \\
-
-81 & 30.3790 & 22.4093 & 224 & 80.9063 & 0.1493 \\
-
-82 & 30.7736 & 22.4093 & 225 & 81.5233 & 0.1493 \\
-
-83 & 31.1268 & 22.4093 & 226 & 82.1234 & 0.1493 \\
-
-84 & 31.4403 & 22.4093 & 228 & 83.2654 & 1.4006 \\
-
-85 & 31.7158 & 22.4093 & 229 & 83.8043 & 1.4006 \\
-
-86 & 31.9551 & 22.4093 & 230 & 84.3201 & 1.4006 \\
-
-87 & 32.1600 & 22.4093 & 231 & 84.8117 & 1.4006 \\
-
-88 & 32.3322 & 22.4093 & 232 & 85.2780 & 1.4006 \\
-
-89 & 32.4734 & 22.4093 & 233 & 85.7178 & 1.4006 \\
-
-90 & 32.5854 & 22.4093 & 300 & 88.8952 & 0.0093 \\ \hline
-\end{tabular}
-$$
-
-\section*{}
-
-\paragraph{Part 3:} 
-
-\subparagraph{a)} 
-
-\subparagraph{b)} \\ \\
+   \paragraph*{} We used both and one and two dimenssional poisson problems to study multigrid methods for solving partial differential equations. Using iterative solvers for linear systems we show how coarsening the descritization can lead to approximations which converge to the true solution of the PDE with fewer iterations of the solver. 
 
 
-\section*{}
+\section{Motivation}
+   
+    \paragraph*{} Error smoothing:
 
-\paragraph{Part 4:} 
+    \begin{itemize}
+        \item Brief explanation of aliasing.
+        \item Iterative solvers are smoothers, so they minimize high frequencies first.
+        \item Coarsening the grid allows low frequencies to look like high frequencies.
+    \end{itemize}
 
-\subparagraph{a)} 
-1. \\ \\
+\section{One Dimenssional Problem}
+    
+    \subsection{Implementation}   
+        \paragraph*{}
 
-\subparagraph{b)} Show \emph{quantitatively} why you expect your new choice of interpolation scheme to be an improvement on the original one. \\ \\
-The error estimates for the two interpolation schemes provide us with quantitative reason to think Hermite interpolation has an advantage:
+    \subsection{Results}
+        \paragraph*{}
 
-\subparagraph{c)} 
+\section{Two Dimenssional Problem}
+    
+    \subsection{Implementation}   
+        \paragraph*{}
 
-$$
-\rowcolors{2}{gray!25}{white}
-\begin{tabular}{ r c c || r c c }  
-Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
-   22 & 48.6545 & 0.0001 & 91 & 32.6703 & 0.0590 \\
+    \subsection{Results}
+        \paragraph*{}
 
-   80 & 29.9417 & 0.0808 & 92 & 32.7288 & 0.0115 \\
+\section{Error Analysis}
+    
+    \subsection{Multigrid}   
+        \paragraph*{}
 
-   81 & 30.3798 & 0.2558 & 224 & 80.9063 & 0.0031 \\
+    \subsection{Jacobi}
+        \paragraph*{}
 
-   82 & 30.7748 & 0.4465 & 225 & 81.5233 & 0.0049 \\
+\section{Conclution}
 
-   83 & 31.1283 & 0.6013 & 226 & 82.1233 & 0.0025 \\
-
-   84 & 31.4420 & 0.6919 & 228 & 83.2659 & 0.0086 \\
-
-   85 & 31.7177 & 0.7085 & 229 & 83.8053 & 0.0205 \\
-
-   86 & 31.9570 & 0.6563 & 230 & 84.3214 & 0.0246 \\
-
-   87 & 32.1617 & 0.6563 & 231 & 84.8130 & 0.0197 \\
-
-   88 & 32.3337 & 0.4151 & 232 & 85.2789 & 0.0103 \\
-
-   89 & 32.4746 & 0.2733 & 233 & 85.7182 & 0.0025 \\
-
-   90 & 32.5862 & 0.1488 & 300 & 88.8952 & 0.0001 \\ \hline
-\end{tabular}
-$$
-
-\section*{}
-
-\paragraph{Part 5:} 
-
-\subparagraph{a)} 
-
-\subparagraph{b)} 
+\section{}
 
 
-\section*{}
 
-\paragraph{Part 6:} 
 
-\subparagraph{a)} 
 
-\pagebreak
+
+
+
+
+
+
+
+% \subparagraph{a)} 
+
+% \subparagraph{b)} 
+
+% $$
+% \rowcolors{2}{gray!25}{white}
+% \begin{tabular}{ r  l || r  l }  
+% Day & Temp. & Day & Temp. \\ \hline
+% 22 & 48.6544 & 91 & 32.6699 \\
+
+% 80 & 29.9413 &  92 & 32.7286 \\
+
+% 81 & 30.3790 & 224 & 80.9063 \\
+
+% 82 & 30.7736 & 225 & 81.5233 \\
+
+% 83 & 31.1268 & 226 & 82.1234 \\
+
+% 84 & 31.4403 & 228 & 83.2654 \\
+
+% 85 & 31.7158 & 229 & 83.8043 \\
+
+% 86 & 31.9551 & 230 & 84.3201 \\
+
+% 87 & 32.1600 & 231 & 84.8117 \\
+
+% 88 & 32.3322 & 232 & 85.2780 \\
+
+% 89 & 32.4734 & 233 & 85.7178 \\
+
+% 90 & 32.5854 & 300 & 88.8952 \\ \hline
+% \end{tabular}
+% $$
+
+% %-- Next problem: --%
+% \section*{}
+
+% \paragraph{Part 2:} 
+
+% \subparagraph{a)} 
+% $$
+% \rowcolors{2}{gray!25}{white}
+% \begin{tabular}{ r c c || r c c }  
+% Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
+% 22 & 48.6544 & 0.0093 & 91 & 32.6699 & 22.4093 \\
+
+% 80 & 29.9413 & 22.4093 &  92 & 32.7286 & 22.4093 \\
+
+% 81 & 30.3790 & 22.4093 & 224 & 80.9063 & 0.1493 \\
+
+% 82 & 30.7736 & 22.4093 & 225 & 81.5233 & 0.1493 \\
+
+% 83 & 31.1268 & 22.4093 & 226 & 82.1234 & 0.1493 \\
+
+% 84 & 31.4403 & 22.4093 & 228 & 83.2654 & 1.4006 \\
+
+% 85 & 31.7158 & 22.4093 & 229 & 83.8043 & 1.4006 \\
+
+% 86 & 31.9551 & 22.4093 & 230 & 84.3201 & 1.4006 \\
+
+% 87 & 32.1600 & 22.4093 & 231 & 84.8117 & 1.4006 \\
+
+% 88 & 32.3322 & 22.4093 & 232 & 85.2780 & 1.4006 \\
+
+% 89 & 32.4734 & 22.4093 & 233 & 85.7178 & 1.4006 \\
+
+% 90 & 32.5854 & 22.4093 & 300 & 88.8952 & 0.0093 \\ \hline
+% \end{tabular}
+% $$
+
+% \section*{}
+
+% \paragraph{Part 3:} 
+
+% \subparagraph{a)} 
+
+% \subparagraph{b)} hey \\ \\
+
+
+% \section*{}
+
+% \paragraph{Part 4:} 
+
+% \subparagraph{a)} 
+% 1. \\ \\
+
+% \subparagraph{b)} Show \emph{quantitatively} why you expect your new choice of interpolation scheme to be an improvement on the original one. \\ \\
+% The error estimates for the two interpolation schemes provide us with quantitative reason to think Hermite interpolation has an advantage:
+
+% \subparagraph{c)} 
+
+% $$
+% \rowcolors{2}{gray!25}{white}
+% \begin{tabular}{ r c c || r c c }  
+% Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
+%    22 & 48.6545 & 0.0001 & 91 & 32.6703 & 0.0590 \\
+
+%    80 & 29.9417 & 0.0808 & 92 & 32.7288 & 0.0115 \\
+
+%    81 & 30.3798 & 0.2558 & 224 & 80.9063 & 0.0031 \\
+
+%    82 & 30.7748 & 0.4465 & 225 & 81.5233 & 0.0049 \\
+
+%    83 & 31.1283 & 0.6013 & 226 & 82.1233 & 0.0025 \\
+
+%    84 & 31.4420 & 0.6919 & 228 & 83.2659 & 0.0086 \\
+
+%    85 & 31.7177 & 0.7085 & 229 & 83.8053 & 0.0205 \\
+
+%    86 & 31.9570 & 0.6563 & 230 & 84.3214 & 0.0246 \\
+
+%    87 & 32.1617 & 0.6563 & 231 & 84.8130 & 0.0197 \\
+
+%    88 & 32.3337 & 0.4151 & 232 & 85.2789 & 0.0103 \\
+
+%    89 & 32.4746 & 0.2733 & 233 & 85.7182 & 0.0025 \\
+
+%    90 & 32.5862 & 0.1488 & 300 & 88.8952 & 0.0001 \\ \hline
+% \end{tabular}
+% $$
+
+% \section*{}
+
+% \paragraph{Part 5:} 
+
+% \subparagraph{a)} 
+
+% \subparagraph{b)} 
+
+
+% \section*{}
+
+% \paragraph{Part 6:} 
+
+% \subparagraph{a)} 
+
+% \pagebreak
 
 
 
