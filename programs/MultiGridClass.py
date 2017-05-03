@@ -84,23 +84,19 @@ class MultiGridClass:
         self.A_list.append(A)
 
         x_temp = x
-        for i in xrange(self.max_levels):
-             
+
+        # determine all A matrices
+        for i in xrange(self.max_levels-1):
+             newR = get_Rint(len(x_temp) - 2) 
              nextSize = .5 * (len(x_temp) - 1) - 1
-             newR = get_Rint(nextSize) 
              newT = get_Tint(nextSize)
-             #print "R shape: ", newR.shape
-             #print "A shape: ", self.A_list[-1].shape
-             #print "T shape: ", newT.shape
-             # do not make a A matrix when we have only one interior point
-             if self.A_list[-1].shape == (1,1):
-                break
+             # print "R shape: ", newR.shape
+             # print "A shape: ", self.A_list[-1].shape
+             # print "T shape: ", newT.shape
+
             # source: strang
              self.A_list.append(np.dot(newR, np.dot(self.A_list[-1], newT ) ))
              x_temp = x_temp[::2]
-
-        # for a in self.A_list:
-        #     print a
 
 
     def restrict(self):
@@ -119,17 +115,43 @@ class MultiGridClass:
         jump = 2 ** (self.level - 1)
         self.current_x = self.x[::jump]
 
-    def iterative_solver(self, num_times=2):
+    def iterative_solver(self, u, rhs=None, num_times=2):
         ''' 
+        u in beginning is init guess
         Execute the interative solver to improve the solution u
         on current grid '''
-        x_bc = self.current_x
-        xx = x_bc[1:-1]
-        dx = xx[1] - xx[0]
-        m  = len(xx)
-        for jj in range(num_times):
-            for ii in range(1, m + 1):
-                self.u[ii] = 0.5 * (self.u[ii+1] + self.u[ii-1]) - self.f(x_bc[ii]) * dx**2 / 2.0
+        omega = 2.0/3.0
+        if rhs == None: 
+            x_bc = self.current_x
+            xx = x_bc[1:-1]
+            dx = xx[1] - xx[0]
+            m  = len(xx)
+            for jj in range(num_times):
+                for ii in range(1, m + 1):
+                    # interior jacobi iteration
+                    if self.solver=='jacobi':
+                        u[ii] = 0.5 * (u[ii+1] + u[ii-1]) - self.f(x_bc[ii]) * dx**2 / 2.0
+                    elif self.solver=='SOR':
+                        omega = 2.0 / 3.0
+                        u_gs = 0.5 * (u[ii-1] + u[ii+1] - dx**2 * self.f(x_bc[ii]))    
+                        u[ii] += omega * (u_gs - u[ii])
+        else: 
+            x_bc = self.current_x
+            xx = x_bc[1:-1]
+            m = len(rhs)
+            rhs = np.concatenate(( [0], rhs, [0] ))
+            
+            u = np.zeros((m+2))
+            dx = xx[1] - xx[0]
+            for jj in range(num_times):
+                for ii in range(1,m + 1):
+                    if self.solver=='jacobi':
+                        u[ii] = 0.5 * (u[ii+1] + u[ii-1]) - rhs[ii] * dx**2 / 2.0
+                    elif self.solver=='SOR':
+                        # omega = 2.0 / 3.0
+                        u_gs = 0.5 * (u[ii-1] + u[ii+1] - dx**2 * rhs[ii])
+                        u[ii] += omega * (u_gs - u[ii])
+            return u[1:-1]
 
     def plot_true(self):
         ''' Plot u(x) '''
@@ -163,7 +185,6 @@ class MultiGridClass:
             self.interpolate()
             self.iterative_solver(num_times=num_post)
             print_error()
-    
     def solveCGC(self, num_pre = 2, num_post=2, 
         num_down=1, num_up=1, u_true=None):
         ''' 
@@ -178,7 +199,7 @@ class MultiGridClass:
                 print 'Error with mg', self.get_error(u_true)
         
         # relax num_pre times on A^h u^h = f^h
-        self.iterative_solver(num_times = num_pre)
+        self.iterative_solver(self.u, num_times = num_pre)
         
         fig = plt.figure()
         axes = fig.add_subplot(1, 1, 1)
@@ -191,8 +212,9 @@ class MultiGridClass:
 
         # number of interior points in mesh
         numInt = len(self.current_x) - 2
-        #R = get_Rint(numInt, dim=1)
-        R = .5*get_Tint( (numInt-1) /2 ).T
+        R = get_Rint(numInt, dim=1)
+        #R = .5*get_Tint( (numInt-1) /2 ).T
+
         intPoints = self.current_x[1:-1]
         res = self.f(intPoints) - np.dot(self.A_list[0], self.u[1:-1])
         # restrict the residual to coarser mesh
@@ -206,7 +228,7 @@ class MultiGridClass:
         self.u[1:-1] = self.u[1:-1] + np.dot(T, error)
 
         # relax num_post times on A^h u^h = f^h
-        self.iterative_solver(num_times = num_post)
+        self.iterative_solver(self.u, num_times = num_post)
 
         fig = plt.figure()
         axes = fig.add_subplot(1, 1, 1)
@@ -216,6 +238,62 @@ class MultiGridClass:
         axes.set_ylabel(r"$u(x)$")
         axes.legend(loc=2)
         plt.savefig("../plots/mg_post.pdf")
+
+    def test(self, num_pre = 2, num_post=2, 
+            num_down=1, num_up=1, u_true=None):
+        
+        fig = plt.figure()
+        axes = fig.add_subplot(1, 1, 1)
+        #axes.plot(self.current_x, self.u,  'r-', label='guess')
+
+        # pre-smoothing relaxation
+        self.iterative_solver(self.u, num_times = num_pre)
+
+        # number of interior points in mesh
+        numInt = len(self.current_x) - 2
+
+        T = get_Tint(numInt=len(self.current_x[::2])-2)
+        R = get_Rint(numInt, dim=1)
+
+        intPoints = self.current_x[1:-1]
+        # compute residual and restrict it to coarser mesh
+        res = self.f(intPoints) - np.dot(self.A_list[0], self.u[1:-1])
+        res = np.dot(R, res) 
+
+        # relax three times on Ae = r, note we do not solve system here
+        error = self.iterative_solver(res, rhs=res, num_times=3)
+
+        #correct fine grid approx.
+        self.u[1:-1] = self.u[1:-1] + np.dot(T, error)
+
+        # relax three more times with new approximation
+        self.iterative_solver(self.u, num_times = num_pre)
+        res = self.f(intPoints) - np.dot(self.A_list[0], self.u[1:-1])
+        res = np.dot(R, res) # coarsen residual again
+
+        # relax three times on Ae = r, note we do not solve system here
+        error = self.iterative_solver(res, rhs=res, num_times=3)
+
+        self.u[1:-1] = self.u[1:-1] + np.dot(T, error)
+        
+        axes.plot(self.current_x, self.u, label='$u$')
+        axes.set_title(r"good Multigrid Solution $u''(x)=0$")
+        axes.set_xlabel(r"$x$")
+        axes.set_ylabel(r"$u(x)$")
+        axes.legend(loc=2)
+        plt.savefig("../plots/mg_post_error_smooth.pdf")
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
