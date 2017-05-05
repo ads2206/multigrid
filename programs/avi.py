@@ -56,10 +56,10 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     *output*
     u: size unchanges, but closer approximation to the solution'''
         
-    print 'hey'
+    # print 'hey'
     ## BASE CASE
     if len(u) <= 8:
-        print len(u), len(A), len(rhs)
+        # print len(u), len(A), len(rhs)
         u[1:-1] = np.linalg.solve(A, rhs[1:-1])
         return u, rhs, dx
     
@@ -89,7 +89,7 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     # -----------------
     # Get error and use to improve u
     # -----------------
-    print 'line92'
+    # print 'line92'
     e, rhs_e, dx_e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
     
     T = get_T(len(e))
@@ -115,7 +115,7 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
         # Restrict A
         if i > 0: A = np.dot(R_int, np.dot(A, T_int)) #RAT 
         A_list.append(A)
-        print 'line 118'
+        # print 'line 118'
         new_u, rhs, dx = v_sched(u, A, rhs, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
     
     u = new_u.copy()
@@ -136,7 +136,7 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
 
         # Interpolate by getting the last A
         A = A_list.pop()
-        print 'line 138'
+        # print 'line 138'
         u, rhs, dx = v_sched(new_u, A, new_rhs, .5 * dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
     
     return new_u, rhs, dx
@@ -186,9 +186,9 @@ def main():
             return 0.0
 
     grid = MGC(x, U0, domain, f)
-    print grid.A_list[0].shape
+    # print grid.A_list[0].shape
     grid.u, rhs, dx = v_sched(grid.u, grid.A_list[0], f(x), dx)
-    print grid.u
+    # print grid.u
 
 if __name__ == "__main__":
     main()
