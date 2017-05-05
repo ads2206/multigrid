@@ -55,16 +55,13 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
 
     *output*
     u: size unchanges, but closer approximation to the solution'''
-        
-    # print 'hey'
+
     ## BASE CASE
-    if len(u) <= 8:
-        # print len(u), len(A), len(rhs)
+    if num_down == 0:
+        # print 'base case'
         u[1:-1] = np.linalg.solve(A, rhs[1:-1])
         return u, rhs, dx
-    
-    # Needed for A matricies when coming back up in second for loop
-    A_list = [A]
+
     
     # -----------------
     # Relax on Au = rhs
@@ -75,8 +72,7 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     # -----------------
     # Solve defect eq for residue
     # -----------------
-    
-    # Handle BC's
+
     residue = np.zeros(len(rhs))
     residue[1:-1] = rhs[1:-1] - np.dot(A, u[1:-1])
     R = get_R(len(residue) / 2 + 1 )
@@ -90,56 +86,20 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     # Get error and use to improve u
     # -----------------
     # print 'line92'
-    e, rhs_e, dx_e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
+    e, rhs_e, dx_e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down-1, num_up=num_up-1, method='GS')
     
     T = get_T(len(e))
     e = np.dot(T, e)
 
-    u += e
+    u = u + e
 
     # -----------------
-    # Restrict A, u, rhs
+    # Relax on Au = rhs
     # -----------------
 
-    for i in xrange(num_down):
-        
-        # get T_int, R_int, R, 
-        R = get_R(len(rhs[::2]))
-        R_int = get_Rint(len(A[::2]) - 1)
-        T_int = get_Tint(len(A[::2]) - 1)
+    u = iterative_solver(u, rhs, dx, num_iterations=num_post, method='GS')
 
-        # Restrict u, rhs
-        u = np.dot(R, u)
-        rhs = np.dot(R, rhs)
-
-        # Restrict A
-        if i > 0: A = np.dot(R_int, np.dot(A, T_int)) #RAT 
-        A_list.append(A)
-        # print 'line 118'
-        new_u, rhs, dx = v_sched(u, A, rhs, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
-    
-    u = new_u.copy()
-
-    # -----------------
-    # Interpolate
-    # -----------------
-    A = A_list.pop()
-
-    for j in xrange(num_up):
-
-        # get T 
-        T = get_T(len(rhs))
-
-        # Interpolate u, rhs
-        new_u = np.dot(T, u)
-        new_rhs = np.dot(T, rhs)
-
-        # Interpolate by getting the last A
-        A = A_list.pop()
-        # print 'line 138'
-        u, rhs, dx = v_sched(new_u, A, new_rhs, .5 * dx, num_pre=num_pre, num_post=num_post, num_down=num_down, num_up=num_up, method='GS')
-    
-    return new_u, rhs, dx
+    return u, rhs, dx
 
 def make_initial_guess(length, wns, N):
     '''
@@ -162,33 +122,39 @@ def make_initial_guess(length, wns, N):
 
 def main():
     # Problem setup
-    domain = (0.0, 2.0 * np.pi)
-    bc = (0., 0.)
-    m = 17 # includes boundary points, m-2 interior points
+
+    u_true = lambda x: -1/36.0 * np.sin(6.0 *x)
+
+    f = lambda x: np.sin(6.0 *x)
+
+    domain = (0.0, 1.0)
+    bc = [u_true(i) for i in domain]
+    m = 2**6 + 1 # includes boundary points, m-2 interior points
     x = np.linspace(domain[0], domain[1], m)
     dx = x[1] - x[0]
+
+    U0 = np.zeros(len(x))
+    U0[0] = bc[0]
+    U0[-1] = bc[-1]
+
+    grid = MGC(x, U0.copy(), domain, f, bc=bc)
+
+    jacobi = MGC(x, U0.copy(), domain, f, bc=bc)
     
-    # 1. initial guess of all zeros
-    #U0 = np.zeros(m)
+    grid_u, rhs, dx = v_sched(grid.u, grid.A_list[0], f(x), dx, num_down=5)
+
+    jacobi_u = iterative_solver(jacobi.u, f(x), dx, num_iterations=16)
     
-    # 2. sinusoidal guess
-    wavenumbers = [12, 30] # k1, k2
-    U0 = make_initial_guess(m, [12, 30], N = m-1)
+    print grid.u
+    fig = plt.figure()
+    axes = fig.add_subplot(1,1,1)
+    axes.plot(x, grid_u, label='MG')
 
-    #u_true = lambda x: np.sin(x)
-    #f = lambda x: - np.sin(x)
-    u_true = lambda x: 0.0 * x
-
-    def f(x):
-        if type(x) is np.ndarray:
-            return np.zeros(len(x))
-        if type(x) is float or np.float64:
-            return 0.0
-
-    grid = MGC(x, U0, domain, f)
-    # print grid.A_list[0].shape
-    grid.u, rhs, dx = v_sched(grid.u, grid.A_list[0], f(x), dx)
-    # print grid.u
+    axes.plot(x, u_true(x), label='u_true')
+    
+    axes.plot(x, jacobi_u, label='jacobi')
+    axes.legend()
+    plt.show()
 
 if __name__ == "__main__":
     main()
