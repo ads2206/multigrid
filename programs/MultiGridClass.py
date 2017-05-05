@@ -122,13 +122,8 @@ class MultiGridClass:
         # array: grid discritization
         self.x = x
 
-        # self.current_x = x
-        # self.level = 1
-        # self.y (to be added for 2d problems)
-
         # array: solution, U0 represents initial guess
         self.u = U0  
-        # self.init_guess = U0
 
         # tuple: domain endpoints (x0, x1)
         self.domain = domain
@@ -142,6 +137,9 @@ class MultiGridClass:
         # function: non-homogenous term
         self.f = f
 
+        # int: iteration counter
+        self.iter_count = 0
+
         # make sure that the discretization is acceptable
         # we can only have discretizations of the form 
         # 2^j + 1, for j = [1, 2, ...]
@@ -149,7 +147,6 @@ class MultiGridClass:
         self.max_level = np.log2(len(x)-1)
         assert(self.max_level % 1 == 0.0) 
         self.max_level = int(self.max_level)
-
 
         # matrix is square and only includes interior points
         mat_size = len(x)-2   
@@ -161,7 +158,7 @@ class MultiGridClass:
 
 
     def get_error(self, u_true):
-        return np.linalg.norm(self.u-u_true(self.current_x))
+        return np.linalg.norm(self.u-u_true(self.x))
 
     def v_sched(self, num_pre=2, num_post=2):
         ''' Calls v_sched() defined above to approximate
@@ -178,6 +175,8 @@ class MultiGridClass:
         self.u = v_sched(u, A, rhs, dx, num_pre=num_pre, num_post=num_post, 
                             level=self.max_level, method=self.solver)
 
+        self.iter_count = self.iter_count + num_pre + num_post
+
     def iterate(self, num=2):
         ''' Calls v_sched() defined above to approximate
         self.u using multigrid techniques with coarse grid 
@@ -190,6 +189,8 @@ class MultiGridClass:
         rhs = self.f(self.x)
         dx = self.x[1] - self.x[0]
         self.u = iterative_solver(u, rhs, dx, num_iterations=num)
+
+        self.iter_count = self.iter_count + num
 
     def plot(self, u_true, plot_error=True):
 
