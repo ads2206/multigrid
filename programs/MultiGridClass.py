@@ -43,42 +43,98 @@ def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
                     u[i] += omega * (u_gs - u[i])
         return u
 
-def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, 
-                num_down=1, num_up=1, method='GS'):
+def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=1, num_up=1, method='GS'):
+    ''' Approximiating u system Au = rhs using an iterative method
+    *input*
+    u:  size total boundary, including endpoints, input is initial guess
+    rhs: size total boundary, including endpoints, input should be unchanged
+    A: dimenssions of the interior of the problem
+
+    *output*
+    u: size unchanges, but closer approximation to the solution'''
         
     ## BASE CASE
+    if len(u) <= 4:
+        u[1:-1] = np.linalg.solve(A, rhs[1:-1])
+        return u
+    
+    # -----------------
+    # Relax on Au = rhs
+    # -----------------
 
     u = iterative_solver(u, rhs, dx, num_iterations=num_pre, method='GS')
+    
+    # -----------------
+    # Solve defect eq for residue
+    # -----------------
+    
     # Handle BC's
-    residue = rhs[1:-1] - np.dot(A, u[1:-1])
-    R = get_Rint(len(residue))
+    residue = np.zeros(len(rhs))
+    residue[1:-1] = rhs[1:-1] - np.dot(A, u[1:-1])
+    R = get_R(len(residue))
     residue = np.dot(R, residue)
 
     T = get_Tint(len(A[::2]))
     A = nump.dot(R, np.dot(A, T)) #RAT 
 
-    e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, \
+    # -----------------
+    # Get error and use to improve u
+    # -----------------
+
+    e, rhs_e, dx_e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, \
                     num_down=num_down, num_up=num_up, method='GS')
 
     e = np.dot(T, e)
 
     u[1:-1] += e
 
+    # -----------------
+    # Restrict A, u, rhs
+    # -----------------
+
+    # Needed for A matricies when coming back up in second for loop
+    A_list = [A]
+
     for i in xrange(num_down):
-        # new_int = np.dot(R, u[1:-1])
-        new_u = np.zeros(len(u[::2]))
-        new_u[1:-1] = np.dot(R, u[1:-1])
-        new_u[0] = u[0]
-        new_u[-1] = u[-1]
-        new_rhs = np.dot(R, rhs)
         
-        new_u = v_sched(new_u, A, new_rhs)
+        # get T_int, R_int, R, 
+        R = get_R(len(rhs))
+        R_int = get_Rint(len(A))
+        T_int = get_Tint(len(A[::2]))
 
+        # Restrict u, rhs
+        u = np.dot(R, u)
+        rhs = np.dot(R, rhs)
+
+        # Restrict A
+        A = nump.dot(R_int, np.dot(A, T_int)) #RAT 
+        A_list.append(A)
+
+        new_u, rhs, dx = v_sched(new_u, A, new_rhs, 2*dx, num_pre=num_pre, num_post=num_post, \
+                    num_down=num_down, num_up=num_up, method='GS')
+    
+    u = new_u.copy
+
+    # -----------------
+    # Relax on Au = rhs
+    # -----------------
+    
     for j in xrange(num_up):
-        self.interpolate()
-        self.iterative_solver(num_times=num_post)
-        print_error()
 
+        # get T 
+        T = get_T(len(residue))
+
+        # Interpolate u, rhs
+        new_u = np.dot(T, u)
+        new_rhs = np.dot(T, rhs)
+
+        # Interpolate by getting the last A
+        A = A_list.pop()
+
+        u, rhs, dx = v_sched(new_u, A, new_rhs, .5 * dx, num_pre=num_pre, num_post=num_post, \
+                    num_down=num_down, num_up=num_up, method='GS')
+    
+    return new_u, rhs, dx
 
 class MultiGridClass:
     ''' 
@@ -148,9 +204,10 @@ class MultiGridClass:
 
         # determine all A matrices
         for i in xrange(self.max_levels-1):
-             newR = get_Rint(len(x_temp) - 2) 
              nextSize = .5 * (len(x_temp) - 1) - 1
              newT = get_Tint(nextSize)
+             newR = get_Rint(nextSize) 
+
              # print "R shape: ", newR.shape
              # print "A shape: ", self.A_list[-1].shape
              # print "T shape: ", newT.shape
