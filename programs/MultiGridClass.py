@@ -28,7 +28,7 @@ def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
         *output*
         u: size unchanges, but closer approximation to the solution'''
         # Set omega for SOR
-        omega = 2.0/3.0
+        omega = 2.0 - 2 * np.pi * dx
 
         m  = len(rhs)
         for j in range(num_iterations):
@@ -40,7 +40,7 @@ def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
 
                 elif method=='SOR':
                     u_gs = 0.5 * (u[i-1] + u[i+1] - dx**2 * rhs[i])    
-                    u[i] += omega * (u_gs - u[i])
+                    u[i] = u[i] + omega * (u_gs - u[i])
         return u
 
 def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
@@ -152,13 +152,13 @@ class MultiGridClass:
         mat_size = len(x)-2   
         e = np.ones(mat_size)
         self.A = sparse.spdiags([e, -2*e, e], [-1,0,1], mat_size, mat_size).toarray()
-        self.A /= (x[1] - x[0])**2 
+        self.A = self.A / (x[1] - x[0])**2 
 
         self.plot_title = 'Initial Guess'
 
 
     def get_error(self, u_true):
-        return np.linalg.norm(self.u-u_true(self.x))
+        return np.linalg.norm(self.u-u_true(self.x), ord=2)
 
     def v_sched(self, num_pre=2, num_post=2):
         ''' Calls v_sched() defined above to approximate
@@ -188,7 +188,7 @@ class MultiGridClass:
         u = self.u.copy()
         rhs = self.f(self.x)
         dx = self.x[1] - self.x[0]
-        self.u = iterative_solver(u, rhs, dx, num_iterations=num)
+        self.u = iterative_solver(u, rhs, dx, num_iterations=num, method=self.solver)
 
         self.iter_count = self.iter_count + num
 
