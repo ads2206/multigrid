@@ -46,7 +46,7 @@ def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
                     u[i] += omega * (u_gs - u[i])
         return u
 
-def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='GS'):
+def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
     ''' Approximiating u system Au = rhs using an iterative method
     *input*
     u:  size total boundary, including endpoints, input is initial guess
@@ -57,22 +57,19 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     u: size unchanges, but closer approximation to the solution'''
 
     ## BASE CASE
-    if num_down == 0:
+    if level == 0:
         # print 'base case'
         u[1:-1] = np.linalg.solve(A, rhs[1:-1])
-        return u, rhs, dx
-
+        return u
     
     # -----------------
-    # Relax on Au = rhs
+    # Relax on Au = rhs (num_pre)
     # -----------------
-
     u = iterative_solver(u, rhs, dx, num_iterations=num_pre, method='GS')
     
     # -----------------
     # Solve defect eq for residue
     # -----------------
-
     residue = np.zeros(len(rhs))
     residue[1:-1] = rhs[1:-1] - np.dot(A, u[1:-1])
     R = get_R(len(residue) / 2 + 1 )
@@ -85,8 +82,7 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     # -----------------
     # Get error and use to improve u
     # -----------------
-    # print 'line92'
-    e, rhs_e, dx_e = v_sched(np.zeros(len(residue)), A, residue, 2*dx, num_pre=num_pre, num_post=num_post, num_down=num_down-1, num_up=num_up-1, method='GS')
+    e = v_sched(np.zeros(len(residue)), A, residue, 2.0 * dx, num_pre=num_pre, num_post=num_post, level=level-1, method='GS')
     
     T = get_T(len(e))
     e = np.dot(T, e)
@@ -94,12 +90,11 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, num_down=2, num_up=2, method='
     u = u + e
 
     # -----------------
-    # Relax on Au = rhs
+    # Relax on Au = rhs (num_post)
     # -----------------
-
     u = iterative_solver(u, rhs, dx, num_iterations=num_post, method='GS')
 
-    return u, rhs, dx
+    return u
 
 def make_initial_guess(length, wns, N):
     '''
@@ -141,7 +136,7 @@ def main():
 
     jacobi = MGC(x, U0.copy(), domain, f, bc=bc)
     
-    grid_u, rhs, dx = v_sched(grid.u, grid.A_list[0], f(x), dx, num_down=5)
+    grid_u = v_sched(grid.u, grid.A_list[0], f(x), dx, level=5)
 
     jacobi_u = iterative_solver(jacobi.u, f(x), dx, num_iterations=16)
     
