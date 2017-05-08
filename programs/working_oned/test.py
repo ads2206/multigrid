@@ -19,12 +19,12 @@ m = 2**8+1
 domain = (0.0, 2.0 * np.pi)
 x = np.linspace(domain[0], domain[1], m)
 U0 = np.zeros(m)
-u_true = lambda x: np.sin(x)
+u_true = lambda x: np.sin(x) 
 f = lambda x: - np.sin(x)
 
 
-# m = 17
-# x = np.linspace(0,1,17)
+# m = 2**8+1
+# x = np.linspace(0,1,m)
 # U0 = np.zeros(m)
 # domain = (0.0, 1.0)
 # f = lambda x: np.exp(x)
@@ -63,5 +63,7 @@ plt.semilogy(iterations, [i[2] for i in error], label='SOR')
 plt.legend()
 plt.xlabel('effective iterations')
 plt.ylabel('error')
+
+mg_grid.plot(u_true, True)
 
 plt.show()

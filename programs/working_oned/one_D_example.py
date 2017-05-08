@@ -34,12 +34,12 @@ f = lambda x: - np.sin(x)
 # u_true = lambda x: np.exp(x)
 
 
-mg_grid = MultiGridClass(x, U0, domain, f)
-static_grid = MultiGridClass(x, U0, domain, f)
+mg_grid = MultiGridClass(x, U0, domain, f, solver='GS')
+static_grid = MultiGridClass(x, U0, domain, f, solver='GS')
 mg_grid.plot(u_true, plot_error=True)
 
 mg_grid.v_sched()
-static_grid.iterate(10)
+static_grid.iterate(4)
 
 static_grid.plot(u_true, plot_error=True)
 mg_grid.plot(u_true, plot_error=True)

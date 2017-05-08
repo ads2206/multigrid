@@ -117,7 +117,7 @@ class MultiGridClass:
 
     '''
 
-    def __init__(self, x, U0, domain, f, bc=(0.0,0.0), solver='jacobi'):
+    def __init__(self, x, U0, domain, f, bc=(0.0,0.0), solver='GS'):
         
         # array: grid discritization
         self.x = x
