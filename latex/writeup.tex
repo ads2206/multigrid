@@ -38,9 +38,12 @@
 
 \section{Motivation}
    
-    \paragraph*{} The motivation for using coarser grids, while convergences analysis shows that finer grids should lead to more accurate approximations, comes from an observation about waves, descritizations, and aliasing. The iterative methods, often referred to as smoothers, smooth out error such that in the earlier iterations it is the high frequency components of the error that disappear. As the algorithms sweep more times the error gets smoother, containing lower frequencies and tending toward zero. The trouble with the classical iterative methods like this is that low frequencies in the error can take many iterations to smooth. In general these iterative methods are $\mathcal{O}(n^2)$. Thus, some improvement is speed is desired.
+    \paragraph*{} The motivation for using coarser grids, while convergences analysis shows that finer grids should lead to more accurate approximations, comes from an observation about waves, descritizations, and aliasing. The iterative methods, often referred to as smoothers, smooth out error such that in the earlier iterations it is the high frequency components of the error that vanish first. As the algorithms sweep more times the error gets smoother, containing lower frequencies and tending toward zero. The trouble with the classical iterative methods like this is that low frequencies in the error can take many iterations to smooth. In general these iterative methods are $\mathcal{O}(n^2)$. Thus, some improvement in speed is desired.
 
-    \paragraph*{} From the Shannon Sampling Theorem we know that to retain all of the wave information, we need the descritization to have just over two points per wavelength.\footnote{C. E. Shannon, ``Communications in the presence of noise'', Proc. IRE, vol. 37, pp. 10-21, Jan. 1949.} The implication of this on our work is that the highest frequency in the error is determined by the mesh grid. Knowing this, we can coarsen the grid so that we ahve fewer smaple points of the error function and then the low frequencies with be among the higher ones still contained in the coarse-grid error. By smoothing the error on this coarser grid we can eliminate more componenets of the error than without the coarsening. We leave the explanation and implimentation of this for later sections.
+    \paragraph*{} From the Shannon Sampling Theorem we know that to retain all of the wave information, we need the descritization to have just over two points per wavelength.\footnote{C. E. Shannon, ``Communications in the presence of noise'', Proc. IRE, vol. 37, pp. 10-21, Jan. 1949.} The implication of this on our work is that the highest frequency in the error is determined by the mesh grid. Knowing this, we can coarsen the grid so that we have fewer smaple points of the error function and then the low frequencies with be among the higher ones still contained in the coarse-grid error. By smoothing the error on this coarser grid we can eliminate more componenets of the error than we could without the coarsening. We leave the explanation and implimentation of this for later sections.
+
+\section{Multigrid Method}
+
 
 \section{One Dimenssional Problem}
     
@@ -54,7 +57,18 @@
     \end{aligned}
     \end{equation}
     
-    The values of $f(x)$, $a$, $b$, $\alpha$, and $\beta$ are specified below for two different examples.
+    The values of $f(x)$, $a$, $b$, $\alpha$, and $\beta$ are specified below for two different examples. \\
+    \begin{itemize}
+        \item Example \#1: 
+            \begin{equation*}
+                f(x) = -\sin(x) ~ , ~~ a = 0 ~ , ~~ b = 2 \pi ~ , ~~ \alpha = \beta = 0
+            \end{equation*}
+        \item Example \#2: 
+            \begin{equation*}
+                f(x) = e^x ~ , ~~ a = 0 ~ , ~~ b = 1 ~ , ~~ \alpha = 1 ~ , ~~ \beta = e
+            \end{equation*}
+    \end{itemize}
+    The results of our method are presented in the Results section, however we will describe the implementation in the next section first.
 
     \subsection{Implementation}   
 
