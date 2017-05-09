@@ -53,19 +53,19 @@ bc = (alpha_x, beta_x, alpha_y, beta_y)
 #-----------------------
 
 mg_grid = MultiGridClass(x, y, U0, domain, f, bc, solver='GS')
-# sor_grid = MultiGridClass(x, y, U0, domain, f, bc, solver='SOR')
+sor_grid = MultiGridClass(x, y, U0, domain, f, bc, solver='SOR')
 gs_grid = MultiGridClass(x, y, U0, domain, f, bc, solver='GS')
 
-for i in range(20):
+for i in range(30):
     gs_grid.iterate_2d(4)
-    # sor_grid.iterate(4)
+    sor_grid.iterate_2d(4)
     mg_grid.v_sched_2d()
 
 mg_grid.plot_2d(u_true, plot_error=False)
-# sor_grid.plot_2d(u_true, plot_error=False)
+sor_grid.plot_2d(u_true, plot_error=False)
 gs_grid.plot_2d(u_true, plot_error=False)
 
-# plt.show()
+plt.show()
 
 
 # mg_grid = MultiGridClass(x, U0, domain, f, solver='GS')
