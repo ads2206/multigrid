@@ -52,7 +52,7 @@ def iterative_solver_2d(u, rhs, dx, num_iterations=1, method='GS'):
         *output*
         u: size unchanges, but closer approximation to the solution'''
         # Set omega for SOR
-        omega2 = 1 ### Wrong
+        omega2 = 2.0 - 2 * np.pi * dx
 
         m  = len(rhs)
         for k in range(num_iterations):
@@ -126,7 +126,7 @@ def v_sched_2d(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
 
     *output*
     u: size unchanged, but closer approximation to the solution'''
-    print A[0,:]
+    # print A[0,:]
     ## BASE CASE
     if level == 1:
         # print 'base case'
@@ -164,7 +164,7 @@ def v_sched_2d(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
     R_int = get_Rint(m, 2)
     T_int = get_Tint(m, 2)
     temp = np.dot(A, T_int)
-    A = np.dot(R_int, temp) #RAT 
+    A = np.dot(R_int, temp) #RAT     
 
     # -----------------
     # Get error and use to improve u
@@ -289,7 +289,7 @@ class MultiGridClass:
         S = sparse.spdiags([e, e], [-1, 1], m, m)
         I = sparse.eye(m)
         A = sparse.kron(I, T) + sparse.kron(S, I).toarray()
-        self.A = A / (6.0*(x[1] - x[0])**2)
+        self.A = A / ((x[1] - x[0])**2)
         self.plot_title = 'Initial Guess'
 
 
@@ -366,8 +366,8 @@ class MultiGridClass:
 
     def plot_2d(self, u_true, plot_error=True):
         ''' Plot u(x) '''
-        fig = plt.figure()
-        fig.set_figwidth(fig.get_figwidth())
+        fig = plt.figure(figsize=(15,7))
+        # fig.set_figwidth(fig.get_figwidth())
         axes = fig.add_subplot(1, 3, 1)
         plot = axes.pcolor(self.x, self.y, self.u, cmap=plt.get_cmap("Blues"))
         fig.colorbar(plot, label="$U$")
