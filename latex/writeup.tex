@@ -75,7 +75,7 @@ $$
 
 What we find is that this result holds for the first $k/2$ eigenvectors or one half of the unknowns.  
 \begin{equation}
-R_h^{2h} \mathbf{w}_k^h = \mathbf{w}_k^{2h}, \, \,  1 \leq k \leq \frac N 2 
+R_h^{2h} \mathbf{w}_k^h = \cos^2 \left( \frac{k \pi}{2N}\right) \mathbf{w}_k^{2h}, \, \,  1 \leq k \leq \frac N 2 
 \end{equation}
 
 The restriction matrix produces a new kth mode of $A^{2h}$ such that the old kth mode of $A^h$ gets multiplied by a constant.  
@@ -86,7 +86,7 @@ $$
 R_h^{2h} \mathbf{w}_{k'}^h = - \sin^2 \left( \frac{k \pi}{2N} \right) \mathbf{w}_k^{2h}, ~~ 1 \leq k \leq \frac N 2 \text{ where } k' = N-ks
 $$ 
 
-Essentially, what is going on here is the phenomena of aliasing since the restriction matrix is acting on the $(N-k)$th mode of $A^h$ and multiplying it by a constant multiple of the .  The interpretation behind this result is that the oscillatory modes on $\Omega^h$ cannot be represented in the coarser mesh $\Omega^{2h}$ and the restriction operator transforms these nodes into relatively smooth modes on the coarser mesh.  The reason this matrix has no inverse is because there is a two eigenvectors (eigenvector $k$ and eigenvector $N-k$) on $A^h$get mapped to the same kth mode on $A^{2h}$.
+Essentially, what is going on here is the phenomena of aliasing since the restriction matrix is acting on the $(N-k)$th mode of $A^h$ and multiplying it by a constant multiple of the .  The interpretation behind this result is that the oscillatory modes on $\Omega^h$ cannot be represented in the coarser mesh $\Omega^{2h}$ and the restriction operator transforms these nodes into relatively smooth modes on the coarser mesh.  The reason this matrix has no inverse is because there are two eigenvectors (eigenvector $k$ and eigenvector $N-k$) on $A^h$ that get mapped to the same kth mode on $A^{2h}$.
 
 INCLUDE SOME GRAPHS HERE TO DESCRIBE THIS ALIASING
 
@@ -99,6 +99,43 @@ $$
 $$
 \sin(j \pi) \cos \left( \frac{jk \pi}{N} \right) - \cos(j \pi) \sin\left( \frac{jk \pi}{N} \right) =  (-1)^{j+1}\sin\left( \frac{jk \pi}{N} \right) = (-1)^{j+1} w_{k, j}^h
 $$
+
+
+Of course, this two element to one element mapping means that $R_h^{2h}$ contains non-trivial elements in its null space.  Let's take the unit vector $\mathbf{e}_i^h$ on $\Omega^h$, and see how it gets transformed by $R_h^{2h}$.  
+
+\begin{equation}
+R_h^{2h} \mathbf{e}_i^h = \begin{bmatrix}1 & 2 & 1 \\ & &  1  & 2 & 1 \\ & & & \ddots &\ddots & \ddots \\ & & & & 1 & 2 & 1 \end{bmatrix} \begin{bmatrix} 0 \\ \vdots \\ 1 \\ \vdots \\ 0 \end{bmatrix}
+\end{equation}
+
+We notice that there are two cases due to overlapping ones in the odd columns of $R_h^{2h}$.  If $i$ is odd in $\mathbf{e}_i^h$, then we have a contribution from two rows whereas if $i$ is even, there is only one row contribution from only the component with 2.  We have the following: 
+
+\begin{equation}
+R_h^{2h} \mathbf{e}_i^h = 
+    \begin{cases}
+    \frac 1 4 \left( \mathbf{e}_{ \frac{i-1}{2}}^{2h} + \mathbf{e}_{\frac{i+1}{2}}^{2h} \right) ~~ i \text{ odd }\\
+
+    \frac 1 4 \left( 2 \mathbf{e}_{\frac{i}{2}}^{2h} \right) ~~ i \text{ even }\\
+    \end{cases}
+\end{equation}
+
+These unit vectors do not form the basis of the null space because this matrix product is not zero.  How about we look at the transformation of these unit vectors under the iterative method first, namely  $R_h^{2h}A^h \mathbf{e}_i^h$.  
+
+\begin{equation}
+R_h^{2h}A^h \mathbf{e}_i^h = R_h^{2h} \left( - \mathbf{e}_{i-1}^h + 2 \mathbf{e}_{i}^h - \mathbf{e}_{i+1}^h \right)
+\end{equation}
+
+If the $i$ is even then $i-1$ and $i+1$ are odd and we'll get extra terms that do not go to zero, whereas if $i$ is odd, we get: 
+
+\begin{equation}
+R_h^{2h}A^h \mathbf{e}_i^h =  -\frac 1 4 \left( 2 \mathbf{e}_{\frac{i-1}{2}}^{2h} \right) + \frac 1 2 \left( \mathbf{e}_{\frac{i-1}{2}}^{2h} + \mathbf{e}_{\frac{i+1}{2}}^{2h} \right) - \frac 1 2 \mathbf{e}_{ \frac{i+1}{2}}^{2h} = 0 
+\end{equation}
+
+We see that the vectors $\mathbf{n}_i = A^h \mathbf{e}_i^h$ when $i$ is odd form the basis of the null space of the full weighting operator.  The null space contains both smooth and oscillatory modes of $A^h$ because the vector $A^h \mathbf{e}_i^h$, which is a vector in the range of $A^h$, can be decomposed as a linear combination of the eigenvectors mentioned above.  
+
+
+
+
+
 
 include image of pair of complemenatary modes on a certain grid
 
