@@ -296,6 +296,11 @@ class MultiGridClass:
     def get_error(self):
         return np.linalg.norm(self.u - u_true(self.x), ord=2)
 
+    def get_error_2d(self, u_true):
+        X, Y = np.meshgrid(self.x, self.y)
+        return np.max(abs(u_true(X, Y)-self.u))
+        # return np.linalg.norm(self.u - u_true(X, Y), ord=2)
+
     def v_sched(self, num_pre=2, num_post=2):
         ''' Calls v_sched() defined above to approximate
         self.u using multigrid techniques with coarse grid 
