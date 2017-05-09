@@ -16,6 +16,7 @@ import seaborn as sns
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy.sparse as sparse
+from scipy.interpolate import interp2d
 
 from _2d_getMatrices import get_T, get_R, get_Tint, get_Rint
 
@@ -186,6 +187,59 @@ def v_sched_2d(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
 
     return u
 
+def full_multi_grid_2d(u, A, rhs, dx, level, domain,
+                        num_pre=2, num_post=2, method='GS'):
+    
+    # base case
+    if level == 2:
+        # print 'base case'
+        rhs_vec = rhs[1:-1, 1:-1].reshape((len(rhs)-2)**2)
+        u_vec = np.linalg.solve(A, rhs_vec)
+        u[1:-1, 1:-1] = u_vec.reshape(len(rhs)-2, len(rhs)-2)
+        return u
+    
+    # u_temp = u.copy()
+    
+    # Get size of R_int, T_int
+    m = len(A) # get length of one side of A
+    m = np.sqrt(m) # get square root, which is the length of the interior
+    m = (m - 1) / 2 # get length of new iterior after restriction
+    
+    R_int = get_Rint(m, dim=2)
+    T_int = get_Tint(m, dim=2)
+
+    R = get_R(len(rhs) / 2 + 1, dim=2 )
+
+    # smaller A and bigger A matrix is just A 
+    A_small = np.dot(R_int, np.dot(A, T_int)) #RAT 
+
+    rhs_vec = rhs.reshape(len(rhs)**2)
+    rhs_small = R.dot(rhs_vec).reshape((len(rhs)/2+1, len(rhs)/2+1))
+
+    u_vec = u.reshape(len(u)**2)
+    u_small = R.dot(u_vec).reshape((len(u)/2+1, len(u)/2+1))
+
+
+    # recursive call, terminates by changing level variable
+    u_temp = full_multi_grid_2d(u_small, A_small, rhs_small, 2*dx, level-1, domain,
+                    num_pre=num_pre, num_post=num_post, method=method)
+
+
+
+    x = np.arange(domain[0], domain[1]+2.0*dx, 2.0*dx)
+    y = np.arange(domain[2], domain[3]+2.0*dx, 2.0*dx)
+    X, Y = np.meshgrid(x, y)
+    
+    
+    u_interp_func = interp2d(x, y, u_temp, kind='cubic')
+
+    x = np.arange(domain[0], domain[1]+dx, dx)
+    y = np.arange(domain[2], domain[3]+dx, dx)
+    X, Y = np.meshgrid(x, y)
+    u_interp = u_interp_func(x, y)
+
+    return v_sched_2d(u_interp, A, rhs, dx, level=level)
+
 class MultiGridClass:
     ''' 
     Class to manage iterative PDE solvers with 
@@ -332,6 +386,21 @@ class MultiGridClass:
         rhs = self.f(X, Y)
         dx = self.x[1] - self.x[0]
         self.u = v_sched_2d(u, A, rhs, dx, num_pre=num_pre, num_post=num_post, level=self.max_level, method=self.solver)
+
+        self.iter_count = self.iter_count + num_pre + num_post
+
+    def fmg_2d(self, num_pre=2, num_post=2):
+        ''' Calls fmg '''
+       
+        # used for plotting
+        self.plot_title = 'FMG'
+
+        u = self.u.copy()
+        A = self.A
+        X, Y = np.meshgrid(self.x, self.y)
+        rhs = self.f(X, Y)
+        dx = self.x[1] - self.x[0]
+        self.u = full_multi_grid_2d(u, A, rhs, dx, self.max_level, self.domain, num_pre=num_pre, num_post=num_post, method=self.solver)
 
         self.iter_count = self.iter_count + num_pre + num_post
 
