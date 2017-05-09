@@ -44,8 +44,81 @@
 
 \section{Multigrid Method}
 
+notes: 
+derive residual equation, and the role of the residual equations
 
-\section{One Dimenssional Problem}
+
+
+\paragraph{} In this section, we will consider the theory and analyze why multigrid methods work so well.  We will delve deep into gaining some understanding of the linear algebraic implications of mesh restriction and interpolation.  The standard cycle of multigrids is the standard V cycle which looks like: 
+
+[insert diagram of a V cycle]
+
+Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  
+
+We will adopt the same notation that Briggs introduces. $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $I_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
+
+Assuming, we have $N+1$ total points in our boundary, and $N-1$ interior points, then the restriction matrix $R_h^{2h}$ maps $\mathbb{R}^{N-1} \rightarrow \mathbb{R}^{N/2 -1}$.  Since we have $N-1$ unknown values and are mapping to a lower dimension subspace, then the rank of our restriction matrix is $\frac{N}{2} -1 $ and the null space of the restriction matrix is $\frac{N}{2}$.  Let us explore how this matrix transforms the eigenvalues of our iterative matrix $A^h$ on mesh $\Omega^h$.  The eigenvectors or modes of $A^h$ are given by 
+$$\mathbf{w}_{k}^h = \left( \sin\left( \frac{k \pi}{N}\right), \dots, \sin\left( \frac{(N-1)k \pi}{N}\right) \right)$$ where the jth component of the vector is $w_{k,j}^h = \sin\left( \frac{jk \pi}{N}\right)$.  When the restriction operator is applied directly to these vectors we get: 
+
+\begin{equation}
+R_h^{2h} \mathbf{w}_k^h = \frac 1 4 \begin{bmatrix}1 & 2 & 1 \\ & 1 & 2 & 1 \\ & & \ddots & \ddots & \ddots \\ & & & 1 & 2 & 1 \end{bmatrix} \mathbf{w}_k^h  
+\end{equation}
+
+The jth component of this is:  
+\begin{equation}
+\Rightarrow \left( R_h^{2h} \mathbf{w}_k^h \right)_j = 
+\frac 1 4 \left(\sin\left(\frac{(j-1)k \pi}{N} \right) + 2 \sin\left(\frac{jk \pi}{N} \right)  + \sin\left(\frac{(j+1) k \pi}{N} \right)  \right)
+\end{equation}
+Using the following two trigonmetric identities, $\sin(\theta_1 + \theta_2) = \sin \theta_1 \cos\theta_2 + \cos\theta_1\sin\theta_2$ and $\cos(2 \theta) = 2 \cos \theta^2 -1$, leads us to: 
+$$
+\frac 1 4 \left[ 2 \sin\left(\frac{2jk\pi}{N} \right) \cos\left( \frac{k\pi}{N}\right)  + 2 \sin \left( \frac{2jk \pi}{N} \right) \right] =  \sin \left( \frac{jk \pi }{N / 2}\right) \cos^2 \left( \frac{k \pi}{2N} \right) \text{ for } 1 \leq k \leq \frac N 2 $$
+
+What we find is that this result holds for the first $k/2$ eigenvectors or one half of the unknowns.  
+\begin{equation}
+R_h^{2h} \mathbf{w}_k^h = \mathbf{w}_k^{2h}, \, \,  1 \leq k \leq \frac N 2 
+\end{equation}
+
+The restriction matrix produces a new kth mode of $A^{2h}$ such that the old kth mode of $A^h$ gets multiplied by a constant.  
+
+Applying a similar analysis for when $ \frac N 2 \leq k \leq N -1$, yields
+
+$$
+R_h^{2h} \mathbf{w}_{k'}^h = - \sin^2 \left( \frac{k \pi}{2N} \right) \mathbf{w}_k^{2h}, ~~ 1 \leq k \leq \frac N 2 \text{ where } k' = N-ks
+$$ 
+
+Essentially, what is going on here is the phenomena of aliasing since the restriction matrix is acting on the $(N-k)$th mode of $A^h$ and multiplying it by a constant multiple of the .  The interpretation behind this result is that the oscillatory modes on $\Omega^h$ cannot be represented in the coarser mesh $\Omega^{2h}$ and the restriction operator transforms these nodes into relatively smooth modes on the coarser mesh.  The reason this matrix has no inverse is because there is a two eigenvectors (eigenvector $k$ and eigenvector $N-k$) on $A^h$get mapped to the same kth mode on $A^{2h}$.
+
+INCLUDE SOME GRAPHS HERE TO DESCRIBE THIS ALIASING
+
+We define a set $W_k^h$ that takes the span of these complementary nodes (the $(N-k)$th eigenvector and the $k$th eigenvector), $W_k^h = span \{ \mathbf{w}_k^h, \mathbf{w}_{N-k}^h\}$.  We note that: 
+
+$$
+w_{N-k, j}^h = \sin \left( \frac{j (N - k) \pi}{N} \right) = \sin\left( j\pi - \frac{jk \pi}{N}\right)
+$$
+
+$$
+\sin(j \pi) \cos \left( \frac{jk \pi}{N} \right) - \cos(j \pi) \sin\left( \frac{jk \pi}{N} \right) =  (-1)^{j+1}\sin\left( \frac{jk \pi}{N} \right) = (-1)^{j+1} w_{k, j}^h
+$$
+
+include image of pair of complemenatary modes on a certain grid
+
+
+analysis on interpolation operator here
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{One Dimensional Problem}
     
     \paragraph*{} For the one dimenssional problem we chose to demonstrate the Poisson problem with Dirichlet boundary conditions as follows:
     
@@ -72,12 +145,12 @@
 
     \subsection{Implementation}   
 
-        \paragraph*{} 
+        \paragraph*{} Regarding implementation, choosing an appropriate data structure is essential to achieving a high level efficency otherwise, the benefits of the multigrid method is lost.  Briggs, in \textit{A Multigrid Tutorial}, adopts arrays as his primary data structure for one-dimensional problems.  We adopted the same strategy and in general, any arbitrary grid will contain $2^{n-1}$ interir grid points plus two boundary points for a total of $2^{n}+1$.  The size of the arrays are transformed across different mesh grids.  
 
     \subsection{Results}
         \paragraph*{}
 
-\section{Two Dimenssional Problem}
+\section{Two Dimensional Problem}
     
     \subsection{Implementation}   
         \paragraph*{}
@@ -248,6 +321,11 @@
 
 % \pagebreak
 
+\section{Other}  
 
+
+Let us assume that the error produced by lies in the column space or range of $I_{2h}^h$, then this means that there exists a vector $\mathbf{u}^{h} \in \Omega^{2h}$ that gets interpolated to $\mathbf{e}^h$ i.e $\mathbf{e}^h = I_{2h}^h \mathbf{u}^{h}$.  Because our iterative method is associated with some matrix $A^h$ on $\Omega^h$ and the residual equation, we find that:
+
+$$A^h \mathbf{e}^h= \mathbf{r}^h = A^h I^h_{2h} \mathbf{u}^{2h}$$
 
 \end{document}
