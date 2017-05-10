@@ -426,170 +426,57 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
 
     \subsection{Results}
         \paragraph*{} From Example \#2 we have solution plots and an error comparison from four runs, jsut like before: (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+        \subsubsection*{}
         
-        \begin{figure}[h]
-            \centering
-            \includegraphics[scale=.5]{../plots/gs_sol_2d.pdf} \\
-            \includegraphics[scale=.5]{../plots/sor_sol_2d.pdf} \\
-            \includegraphics[scale=.5]{../plots/v_sol_2d.pdf} \\ 
-            \includegraphics[scale=.5]{../plots/fmg_sol_2d.pdf} 
-        \end{figure}
-        
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=.5]{../plots/gs_sol_2d.pdf} \\
+                \caption{(a)}
+            \end{figure}
+            
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=.5]{../plots/sor_sol_2d.pdf} \\
+                \caption{(b)}
+            \end{figure}
+            
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=.5]{../plots/v_sol_2d.pdf} \\ 
+                \caption{(c)}
+            \end{figure}
+            
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=.5]{../plots/fmg_sol_2d.pdf} 
+                \caption{(d)}
+            \end{figure}
+            
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=.75]{../plots/error_2d.pdf}
+                \caption{Comparing error as a function of effective iteration in 2D}
+            \end{figure}  
+
+        \paragraph*{}
+
+\newpage
 \section{Error Analysis}
 
+    \paragraph*{} The error analysis of multigrid methods falls back on the analysis of iterative methods. The multigrid methods converge with fewer sweeps than the iterative solver could on it's own. What's interesting about these methods is that the Full Multi Grid Cycle method converges as the descritization gets finer, independent of the number of sweeps! This is vastly different from the iterative methods alone, and even from the V-Cycle method. 
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.4]{../plots/fmg_error.pdf}
+            \includegraphics[scale=.4]{../plots/v_error.pdf}
+        \end{figure}    
+    The FMG method, plotted below on the left, converges as the descritization number $m$ goes up. At each $m$ value the \lstinline{fmg()} was called the same number of times. The V-Cycle method, whose error is below on the right, was run a little differently. \lstinline{v_sched()} was called $m$ times at each discritization $m$. This is more similar to the iterative smoothers on their own, which propogate information from the boundaries inward and therefore need more sweeps when there are more discrete points in the domain. 
+
+\newpage
 \section{Conclusion}
+    
+    \paragraph*{} Our implemation of multigrid methods leave somethings for future work. Most notably is treatment of non-zero boundary conditions. We found that while the linear system gets only marginally more complicated on paper, non-zero boundary conditions made the methods far more complicated. Additionally allowing the discretization to have $\Delta x$ different from $\Delta y$, would make a more robust method.
 
-
-
-
-
-
-
-
-
-
-
-
-
-% \subparagraph{a)} 
-
-% \subparagraph{b)} 
-
-% $$
-% \rowcolors{2}{gray!25}{white}
-% \begin{tabular}{ r  l || r  l }  
-% Day & Temp. & Day & Temp. \\ \hline
-% 22 & 48.6544 & 91 & 32.6699 \\
-
-% 80 & 29.9413 &  92 & 32.7286 \\
-
-% 81 & 30.3790 & 224 & 80.9063 \\
-
-% 82 & 30.7736 & 225 & 81.5233 \\
-
-% 83 & 31.1268 & 226 & 82.1234 \\
-
-% 84 & 31.4403 & 228 & 83.2654 \\
-
-% 85 & 31.7158 & 229 & 83.8043 \\
-
-% 86 & 31.9551 & 230 & 84.3201 \\
-
-% 87 & 32.1600 & 231 & 84.8117 \\
-
-% 88 & 32.3322 & 232 & 85.2780 \\
-
-% 89 & 32.4734 & 233 & 85.7178 \\
-
-% 90 & 32.5854 & 300 & 88.8952 \\ \hline
-% \end{tabular}
-% $$
-
-% %-- Next problem: --%
-% \section*{}
-
-% \paragraph{Part 2:} 
-
-% \subparagraph{a)} 
-% $$
-% \rowcolors{2}{gray!25}{white}
-% \begin{tabular}{ r c c || r c c }  
-% Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
-% 22 & 48.6544 & 0.0093 & 91 & 32.6699 & 22.4093 \\
-
-% 80 & 29.9413 & 22.4093 &  92 & 32.7286 & 22.4093 \\
-
-% 81 & 30.3790 & 22.4093 & 224 & 80.9063 & 0.1493 \\
-
-% 82 & 30.7736 & 22.4093 & 225 & 81.5233 & 0.1493 \\
-
-% 83 & 31.1268 & 22.4093 & 226 & 82.1234 & 0.1493 \\
-
-% 84 & 31.4403 & 22.4093 & 228 & 83.2654 & 1.4006 \\
-
-% 85 & 31.7158 & 22.4093 & 229 & 83.8043 & 1.4006 \\
-
-% 86 & 31.9551 & 22.4093 & 230 & 84.3201 & 1.4006 \\
-
-% 87 & 32.1600 & 22.4093 & 231 & 84.8117 & 1.4006 \\
-
-% 88 & 32.3322 & 22.4093 & 232 & 85.2780 & 1.4006 \\
-
-% 89 & 32.4734 & 22.4093 & 233 & 85.7178 & 1.4006 \\
-
-% 90 & 32.5854 & 22.4093 & 300 & 88.8952 & 0.0093 \\ \hline
-% \end{tabular}
-% $$
-
-% \section*{}
-
-% \paragraph{Part 3:} 
-
-% \subparagraph{a)} 
-
-% \subparagraph{b)} hey \\ \\
-
-
-% \section*{}
-
-% \paragraph{Part 4:} 
-
-% \subparagraph{a)} 
-% 1. \\ \\
-
-% \subparagraph{b)} Show \emph{quantitatively} why you expect your new choice of interpolation scheme to be an improvement on the original one. \\ \\
-% The error estimates for the two interpolation schemes provide us with quantitative reason to think Hermite interpolation has an advantage:
-
-% \subparagraph{c)} 
-
-% $$
-% \rowcolors{2}{gray!25}{white}
-% \begin{tabular}{ r c c || r c c }  
-% Day & Temp. & Error($\pm$) & Day & Temp. & Error($\pm$) \\ \hline
-%    22 & 48.6545 & 0.0001 & 91 & 32.6703 & 0.0590 \\
-
-%    80 & 29.9417 & 0.0808 & 92 & 32.7288 & 0.0115 \\
-
-%    81 & 30.3798 & 0.2558 & 224 & 80.9063 & 0.0031 \\
-
-%    82 & 30.7748 & 0.4465 & 225 & 81.5233 & 0.0049 \\
-
-%    83 & 31.1283 & 0.6013 & 226 & 82.1233 & 0.0025 \\
-
-%    84 & 31.4420 & 0.6919 & 228 & 83.2659 & 0.0086 \\
-
-%    85 & 31.7177 & 0.7085 & 229 & 83.8053 & 0.0205 \\
-
-%    86 & 31.9570 & 0.6563 & 230 & 84.3214 & 0.0246 \\
-
-%    87 & 32.1617 & 0.6563 & 231 & 84.8130 & 0.0197 \\
-
-%    88 & 32.3337 & 0.4151 & 232 & 85.2789 & 0.0103 \\
-
-%    89 & 32.4746 & 0.2733 & 233 & 85.7182 & 0.0025 \\
-
-%    90 & 32.5862 & 0.1488 & 300 & 88.8952 & 0.0001 \\ \hline
-% \end{tabular}
-% $$
-
-% \section*{}
-
-% \paragraph{Part 5:} 
-
-% \subparagraph{a)} 
-
-% \subparagraph{b)} 
-
-
-% \section*{}
-
-% \paragraph{Part 6:} 
-
-% \subparagraph{a)} 
-
-% \pagebreak
-
-\section{Other}  
+\section{Sources}  
 
 
 \end{document}
