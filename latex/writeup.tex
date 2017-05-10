@@ -1,3 +1,4 @@
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %	Avi Schwarzschild and Andres Soto
@@ -58,16 +59,56 @@
 
     \paragraph*{} From the Shannon Sampling Theorem we know that to retain all of the wave information, we need the descritization to have just over two points per wavelength.\footnote{C. E. Shannon, ``Communications in the presence of noise'', Proc. IRE, vol. 37, pp. 10-21, Jan. 1949.} The implication of this on our work is that the highest frequency in the error is determined by the mesh grid. Knowing this, we can coarsen the grid so that we have fewer smaple points of the error function and then the low frequencies with be among the higher ones still contained in the coarse-grid error. By smoothing the error on this coarser grid we can eliminate more components of the error than we could without the coarsening. We leave the explanation and implimentation of this for later sections.
 
-\section{Multigrid Method}
-
-notes: 
-derive residual equation, and the role of the residual equations
-
-
+\section{ Multigrid Method}
 
 \paragraph{} In this section, we will consider the theory and analyze why multigrid methods work so well.  We will delve deep into gaining some understanding of the linear algebraic implications of mesh restriction and interpolation.  More importantly, we will look at the spectral picture of the multigrid method.  The standard cycle of multigrids is the standard V cycle which looks like: 
 
-[insert diagram of a V cycle]
+\subsection{A Brief Overview}
+The basic structure of the multigrid method is that the relaxation scheme underlying each layer possess the smoothing property.  This motivated the coarser grid due to their slow convergence rate.  Multigrid methods further integrate error correction methods by first approximating the residual $r = f - Av$, where $v$ is an approximation and $A$ represents the matrix associated with the iterative method. 
+
+There are two main ideas that come into play in multigrid.  The firstis that coarser grids can be used to improve initial guesses and is the basis of a strategy called nested iteration.  The second idea incorporates utilizing the residual of each smoothing operation at some mesh level in order to correct.  This is the basis of coarse grid correction.  Both of these strategies together lead us to the Full Multigrid Cycle.  
+
+One main question to consider is how integrid transfers work.  Common practice in the multigrid literature for 1d and 2d problems is to interpolate and restrict across different mesh grids.  These linear mappings are of course defined by matrices which are $T_{2h}^h$ and $R_h^{2h}$ (interpolation and restriction, respectively).  Our interpolation matrix in 1d does $T_{2h}^h \mathbf{v}^{2h} = v_j^{2h}$:
+
+$$
+v_{2j}^h = v_j^{2h} ~ \text{ and } ~ v_{2j+1}^h = \frac 1 2 ( v_j^{2h} + v_{j+1}^{2h}) ~~  0 \leq j \leq \frac N 2 - 1
+$$
+In two dimensions this looks like: 
+
+$$
+v_{2i, 2j}^h = v_{ij}^{2h} ~~ \text{ and } v_{2i+1, 2j}^h = \frac 1 2 \left( v_{ij}^{2h} + v_{i+1, j}^{2h} \right) \text{ and } v_{2i, 2j+1}^h = \frac 1 2 \left( v_{ij}^{2h} + v_{i, j+1}^{2h} \right)
+$$
+$$ 
+v_{2i+1, 2j+1}^h = \frac 1 4 \left( v_{ij}^h + v_{i+1, j}^{2h} + v_{i, j+1}^{2h} + v_{i+1, j+1}^{2h} \right) ~~ 0 \leq i, j \leq \frac N 2 -1
+$$
+
+
+The restrictive matrix in 1d is defined by $R_h^{2h} \mathbf{v}^h = \mathbf{v}^{2h}$ and looks like:
+$$
+v_j^{2h} = \frac 1 4 \left( v_{2j-1}^h + 2v_{2j}^h + v_{2j+1}^h \right)
+$$
+In two dimensions this is: 
+\begin{equation}
+\begin{aligned}
+v_{ij}^{2h} = \frac{1}{16} ( 
+v_{2i-1, 2j-1}^h + v_{2i-1, 2j+1}^h  + v_{2i+1, 2j-1}^h  + v_{2i+1, 2j+1}^h  + \\ 2 \left( v_{2i, 2j-1}^h + v_{2i, 2j+1}^h + v_{2i-1,2j}^h + v_{2i+1,2j}^h\right) + 4v_{2i, 2j}^h  ) 
+\end{aligned}
+\end{equation}
+
+An interesting property is that these matrices are transposes of each other up to a constant. 
+
+    \begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.4]{../plots/vcycle.png}
+    \includegraphics[scale=0.4]{../plots/full-multi-grid-cycle.png}
+    \caption{The left figure is a standard Multigrid V Cycle.  The Right figure is a Full Multigrid Cycle (FMV). }
+    \end{figure}
+
+With grid transfers well defined, we can discuss a bit more intergrid transfers.  At its core, multigrid methods simply smooth an approximation on some mesh with discretization $h$ and use a coarse grid corrections scheme to understand the error at a coarser mesh to get a better approximation.  This is done iteratively in many fashions.  Below we see two standard cycles of multigrid, both of which we implemented.  
+
+
+\subsection{The Basic Spectral Picture of Multigrid Methods}
+\paragraph{}*Now that we have a better idea of multigrid and their power, we can turn towards understanding some of the mathematical basis behind this powerful method.  We will further develop a spectral picture.  
 
 Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  We will adopt the same notation that Briggs introduces. $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $T_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
 
