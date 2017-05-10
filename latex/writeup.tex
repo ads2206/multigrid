@@ -17,10 +17,12 @@
 \usepackage{fancyhdr}
 \usepackage[table]{xcolor}
 \usepackage{amsmath}
+\usepackage{listings}
 \pagestyle{fancy}
 \setlength{\headsep}{.5in}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
 \graphicspath{ {images/} }
+\lstset{basicstyle=\ttfamily}
 	
 %-- Begin the body below ---%
 
@@ -167,30 +169,90 @@ analysis on interpolation operator here
     \end{aligned}
     \end{equation}
     
-    The values of $f(x)$, $a$, $b$, $\alpha$, and $\beta$ are specified below for two different examples. \\
+    The values of $f(x)$, $a$, $b$, $\alpha$, and $\beta$ are specified below for the test example. \\
     \begin{itemize}
         \item Example \#1: 
             \begin{equation*}
                 f(x) = -\sin(x) ~ , ~~ a = 0 ~ , ~~ b = 2 \pi ~ , ~~ \alpha = \beta = 0
             \end{equation*}
-        \item Example \#2: 
-            \begin{equation*}
-                f(x) = e^x ~ , ~~ a = 0 ~ , ~~ b = 1 ~ , ~~ \alpha = 1 ~ , ~~ \beta = e
-            \end{equation*}
+
     \end{itemize}
-    The results of our method are presented in the Results section, however we will describe the implementation in the next section first.
+    The results of our method are presented in the Results section, however we will describe the implementation in the next section first. The analytic solution to this ODE is not a difficult one to derive, and we will not show the derivation here, but we state that the solution is: $$ u(x) = \sin(x) $$
 
     \subsection{Implementation}   
 
-        \paragraph*{} Regarding implementation, choosing an appropriate data structure is essential to achieving a high level efficency otherwise, the benefits of the multigrid method is lost.  Briggs, in \textit{A Multigrid Tutorial}, adopts arrays as his primary data structure for one-dimensional problems.  We adopted the same strategy and in general, any arbitrary grid will contain $2^{n-1}$ interir grid points plus two boundary points for a total of $2^{n}+1$.  The size of the arrays are transformed across different mesh grids.  
+        \paragraph*{} Regarding implementation, choosing an appropriate data structure is essential to achieving a high level efficency otherwise, the benefits of the multigrid method is lost.  Briggs, in \textit{A Multigrid Tutorial}, adopts arrays as his primary data structure for one-dimensional problems.  We adopted the same strategy and in general, any arbitrary grid will contain $2^{n}-1$ interior grid points plus two boundary points for a total of $2^{n}+1$.  The size of the arrays are transformed across different mesh grids. 
+
+        \paragraph*{} In a dedicated python class, we hold onto several attributes of the problem. The constructor for the one dimenssional problem, takes as input: The descrete domain $x$ (a Numpy array), solution array $u$ whose input serves as the initial guess, boundary endpoints, and the non-homogeneous term $f$ as a function. Holding onto these variable we can then call \lstinline{iterate(), v_sched(), or fmg()} to approximate the solution.
+
+        \paragraph*{\lstinline{iterate()}}calls the iterative solver. The numerical method empolyed is either Gauss-Seidel or Successive Over Relaxation. The pseudocode as well as mathematical analysis of these methods was explained in previous assignments for this course, so we chose to leave that out of this paper. 
+
+        \paragraph*{\lstinline{v_sched()}} intiates a Multi Grid V-Cycle which solves a system $Au = f$ with a coarse grid correction scheme. The pseudocode for the recursive implementation used is as follows:
+        \begin{verbatim}
+             1 v_sched(u, A, rhs, dx, level):
+             2     if this is the coarsest grid:
+             3         solve exactly Au = rhs
+             4     else:
+             5         iterate(u) twice
+             6         residue = Au - rhs
+             7         coarsen(A, residue)
+             8         e = v_sched(0, coarse A, coarse residue, 2*dx, level-1)
+             9         interpolate(e) and update u by added the refined e
+            10         iterate(new u) twice                
+            11     return u
+
+        \end{verbatim}
+        The recursive call to \lstinline{v_sched()} is solving a new linear system on the coarser grid. This coarsening is moves through the levels until the problem at hand is small enough to be solved exaclty, in our case using Numpy's linear solver. For the iterative methods called before and after the coarse grid correction,  either Gauss-Seidel or SOR could be chosen, and the number of times of pre and post smoothing are a parameter that can be set.
+
+        \paragraph*{\lstinline{fmg()}} intiates a Full Multi Grid Cycle which solves a system $Au = f$ with a coarse grid correction scheme. The pseudocode for the recursive implementation used is as follows:
+        \begin{verbatim}
+        1 fmg(u, A, rhs, dx, level):
+        2     if this is the coarsest grid:
+        3         solve exactly Au = rhs
+        4     else:
+        5         coarsen(A, u, rhs)
+        6         u' = fmg(coarse u, coarse A, coarse rhs, 2*dx, level-1)
+        7         u_new = interpolate(u')
+        8         u = v_sched(u_new, A, rhs, dx, level)
+        9     return u
+
+        \end{verbatim}
+        The recursive call to \lstinline{fmg()} is solving a coarser version of the same linear system, $Au = f$. At the coarses level it solves this exaclty and then interoplates the solution back up to the finer grid. After each coarsening/refining stage the fucntion calls \lstinline{v_sched()} solving the finer problem using the coarse grid correction scheme outlined above in pseudocode. 
+
+        \paragraph*{} It is important to note here that the pseudocode would look identical for the two dimenssional problem, becasue the differences are in the details. For two dimensions, there is a fair amount of reshaping vectors and matrices, and the coarsening and interpolating matrices are also slightly different, but because these are only outlined in previous sections and not highlited in the pseudocode, we will not rewrite any pseudocode for the two dimensional problem. 
 
     \subsection{Results}
-        \paragraph*{}
+
+        \paragraph*{} From Example \#1 we have solution plots and an error comparison from four runs. Each took the same initialization parameters, other than the choice of iterative solver. (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.4]{../plots/gs_sol_1d.pdf}
+            \includegraphics[scale=.4]{../plots/sor_sol_1d.pdf} \\
+            \includegraphics[scale=.4]{../plots/v_sol_1d.pdf}
+            \includegraphics[scale=.4]{../plots/fmg_sol_1d.pdf}
+        \end{figure}
+
 
 \section{Two Dimensional Problem}
+    \paragraph*{} For the two dimenssional problem we chose to demonstrate the Poisson problem with Dirichlet boundary conditions as follows:
     
-    \subsection{Implementation}   
-        \paragraph*{}
+    \begin{equation}
+    \begin{aligned}
+        u_{xx} + u_{yy} &= f(x, y) ~ , ~~ (x, y) \in \Omega, \\
+        u|_{\partial \Omega} &= g(x, y), \\
+    \end{aligned}
+    \end{equation}
+    
+    The values of $f(x, y)$, $\Omega$, and $g(x, y)$ are specified below for the test example. \\
+    \begin{itemize}
+        \item Example \#1: 
+            \begin{equation*}
+                f(x) = -\sin(x) ~ , ~~ a = 0 ~ , ~~ b = 2 \pi ~ , ~~ \alpha = \beta = 0
+            \end{equation*}
+
+    \end{itemize}
+    The results of our method are presented in the Results section, however we will describe the implementation in the next section first. The analytic solution to this ODE is not a difficult one to derive, and we will not show the derivation here, but we state that the solution is: $$ u(x) = \sin(x) $$
 
     \subsection{Results}
         \paragraph*{}
