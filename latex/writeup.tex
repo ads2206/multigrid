@@ -52,6 +52,7 @@
     \begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.4]{../plots/convergence_sor_diff_modes-motivation.pdf}
+    \caption{k represents the $k^{th}$ Fourier mode. Also, these plots we generated match what can be found in \cite{blue}}
 	\end{figure}
 
     We see that error clearly decreases with each relaxation sweep but that the rate of decrease is much more faster for high frequency initial guesses than low frequency ones.  Of course the first way to improve a relaxation is to increase the number of iterations, or improve the initial guess, however, relaxations on a coarser grid is less expensive.  Moreover, smooth components on a fine grid projected onto a coarser grid look more oscillatory.  If we look at fourier modes associated with a mesh of discretization $h$, then we have:
@@ -110,7 +111,7 @@ With grid transfers well defined, we can discuss a bit more intergrid transfers.
 \subsection{The Basic Spectral Picture of Multigrid Methods}
 \paragraph{}*Now that we have a better idea of multigrid and their power, we can turn towards understanding some of the mathematical basis behind this powerful method.  We will further develop a spectral picture.  
 
-Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  We will adopt the same notation that Briggs introduces. $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $T_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
+Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  We will adopt the same notation that Briggs introduces.\cite{blue} $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $T_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
 
 Assuming, we have $N+1$ total points in our boundary, and $N-1$ interior points, then the restriction matrix $R_h^{2h}$ maps $\mathbb{R}^{N-1} \rightarrow \mathbb{R}^{N/2 -1}$.  Since we have $N-1$ unknown values and are mapping to a lower dimension subspace, then the rank of our restriction matrix is $\frac{N}{2} -1 $ and the null space of the restriction matrix is $\frac{N}{2}$.  Let us explore how this matrix transforms the eigenvalues of our iterative matrix $A^h$ on mesh $\Omega^h$.  The eigenvectors or modes of $A^h$ are given by 
 $$\mathbf{w}_{k}^h = \left( \sin\left( \frac{k \pi}{N}\right), \dots, \sin\left( \frac{(N-1)k \pi}{N}\right) \right)$$ where the jth component of the vector is $w_{k,j}^h = \sin\left( \frac{jk \pi}{N}\right)$.  When the restriction operator is applied directly to these vectors we get: 
@@ -143,7 +144,6 @@ $$
 
 Essentially, what is going on here is the phenomena of aliasing since the restriction matrix is acting on the $(N-k)$th mode of $A^h$ and multiplying it by a constant multiple of the .  The interpretation behind this result is that the oscillatory modes on $\Omega^h$ cannot be represented in the coarser mesh $\Omega^{2h}$ and the restriction operator transforms these nodes into relatively smooth modes on the coarser mesh.  The reason this matrix has no inverse is because there are two eigenvectors (eigenvector $k$ and eigenvector $N-k$) on $A^h$ that get mapped to the same kth mode on $A^{2h}$.
 
-INCLUDE SOME GRAPHS HERE TO DESCRIBE THIS ALIASING
 
 We define a set $W_k^h$ that takes the span of these complementary nodes (the $(N-k)$th eigenvector and the $k$th eigenvector), $W_k^h = span \{ \mathbf{w}_k^h, \mathbf{w}_{N-k}^h\}$.  We note that: 
 
@@ -155,7 +155,6 @@ $$
 \sin(j \pi) \cos \left( \frac{jk \pi}{N} \right) - \cos(j \pi) \sin\left( \frac{jk \pi}{N} \right) =  (-1)^{j+1}\sin\left( \frac{jk \pi}{N} \right) = (-1)^{j+1} w_{k, j}^h
 \end{equation}
 
-INCLUDE IMAGE OF COMPLEMENTARY PAIRS
 
 Of course, this two element to one element mapping means that $R_h^{2h}$ contains non-trivial elements in its null space.  Let's take the unit vector $\mathbf{e}_i^h$ on $\Omega^h$, and see how it gets transformed by $R_h^{2h}$.  
 
@@ -382,11 +381,11 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
 
     \subsection{Implementation}   
 
-        \paragraph*{} Regarding implementation, choosing an appropriate data structure is essential to achieving a high level efficency otherwise, the benefits of the multigrid method is lost.  Briggs, in \textit{A Multigrid Tutorial}, adopts arrays as his primary data structure for one-dimensional problems.  We adopted the same strategy and in general, any arbitrary grid will contain $2^{n}-1$ interior grid points plus two boundary points for a total of $2^{n}+1$.  The size of the arrays are transformed across different mesh grids. 
+        \paragraph*{} Regarding implementation, choosing an appropriate data structure is essential to achieving a high level efficency otherwise, the benefits of the multigrid method is lost.  Briggs, \cite{briggs} in \textit{A Multigrid Tutorial}, adopts arrays as his primary data structure for one-dimensional problems.  We adopted the same strategy and in general, any arbitrary grid will contain $2^{n}-1$ interior grid points plus two boundary points for a total of $2^{n}+1$.  The size of the arrays are transformed across different mesh grids. 
 
-        \paragraph*{} In a dedicated python class, we hold onto several attributes of the problem. The constructor for the one dimenssional problem, takes as input: The descrete domain $x$ (a Numpy array), solution array $u$ whose input serves as the initial guess, boundary endpoints, and the non-homogeneous term $f$ as a function. Holding onto these variable we can then call \lstinline{iterate(), v_sched(), or fmg()} to approximate the solution.
+        \paragraph*{} Much of our code layout is an inerpretation of the pseudocode available in \cite{green}. In a dedicated python class, we hold onto several attributes of the problem. The constructor for the one dimenssional problem, takes as input: The descrete domain $x$ (a Numpy array), solution array $u$ whose input serves as the initial guess, boundary endpoints, and the non-homogeneous term $f$ as a function. Holding onto these variable we can then call \lstinline{iterate(), v_sched(), or fmg()} to approximate the solution.
 
-        \paragraph*{\lstinline{iterate()}}calls the iterative solver. The numerical method empolyed is either Gauss-Seidel or Successive Over Relaxation. The pseudocode as well as mathematical analysis of these methods was explained in previous assignments for this course, so we chose to leave that out of this paper. 
+        \paragraph*{\lstinline{iterate()}}calls the iterative solver. The numerical method empolyed is either Gauss-Seidel or Successive Over Relaxation. The pseudocode as well as mathematical analysis of these methods was explained in previous assignments for this course, so we chose to leave that out of this paper.\cite{mandli} 
 
         \paragraph*{\lstinline{v_sched()}} intiates a Multi Grid V-Cycle which solves a system $Au = f$ with a coarse grid correction scheme. The pseudocode for the recursive implementation used is as follows:
         \begin{verbatim}
@@ -496,7 +495,7 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
             \begin{figure}[!h]
                 \centering
                 \includegraphics[scale=.75]{../plots/error_2d.pdf}
-                \caption{Comparing error as a function of effective iteration in 2D}
+                \caption{Comparing error as a function of effective iteration in 2D, this matches what is expected from reading \cite{strang}}
             \end{figure}  
 
         \paragraph*{}
@@ -517,7 +516,9 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
     
     \paragraph*{} Our implemation of multigrid methods leave somethings for future work. Most notably is treatment of non-zero boundary conditions. We found that while the linear system gets only marginally more complicated on paper, non-zero boundary conditions made the methods far more complicated. Additionally allowing the discretization to have $\Delta x$ different from $\Delta y$, would make a more robust method.
 
-\section{Sources}  
+\newpage
 
+\bibliography{bib} 
+\bibliographystyle{ieeetr}
 
 \end{document}
