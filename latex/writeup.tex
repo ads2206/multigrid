@@ -406,17 +406,28 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
     
     The values of $f(x, y)$, $\Omega$, and $g(x, y)$ are specified below for the test example. \\
     \begin{itemize}
-        \item Example \#1: 
+        \item Example \#2: 
             \begin{equation*}
-                f(x) = -\sin(x) ~ , ~~ a = 0 ~ , ~~ b = 2 \pi ~ , ~~ \alpha = \beta = 0
+            \begin{aligned}
+                f(x, y) =& -\frac12\sin(x)\sin(y) ~, ~~ g(x, y) = 0 \\
+                \Omega &= [0, 2\pi] \times [0, 2\pi]
+            \end{aligned}
             \end{equation*}
 
     \end{itemize}
     The results of our method are presented in the Results section, however we will describe the implementation in the next section first. The analytic solution to this ODE is not a difficult one to derive, and we will not show the derivation here, but we state that the solution is: $$ u(x) = \sin(x) $$
 
     \subsection{Results}
-        \paragraph*{}
-
+        \paragraph*{} From Example \#2 we have solution plots and an error comparison from four runs, jsut like before: (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+        
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.5]{../plots/gs_sol_2d.pdf} \\
+            \includegraphics[scale=.5]{../plots/sor_sol_2d.pdf} \\
+            \includegraphics[scale=.5]{../plots/v_sol_2d.pdf} \\ 
+            \includegraphics[scale=.5]{../plots/fmg_sol_2d.pdf} 
+        \end{figure}
+        
 \section{Error Analysis}
     
     \subsection{Multigrid}   
