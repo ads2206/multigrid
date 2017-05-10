@@ -314,8 +314,7 @@ Plugging in our eigenvalues into this, we obtain:
 \end{equation}
 
 \begin{equation}
-\left(1 - \frac{ \sin^2 \left( \frac{k \pi}{2N} \right) \cos^4\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right)}  \right)\mathbf{w}_k^h  + 
-\frac{ \sin^4 \left( \frac{k \pi}{2N} \right) \cos^2\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right) }  \right)\mathbf{w}_{k'}^h
+\left(1 - \frac{ \sin^2 \left( \frac{k \pi}{2N} \right) \cos^4\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right)}  \right)\mathbf{w}_k^h  + \frac{ \sin^4 \left( \frac{k \pi}{2N} \right) \cos^2\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right) }  \mathbf{w}_{k'}^h
 \end{equation}
 
 Using the double angle formula  $\sin 2 \theta = 2\sin \theta \cos \theta $ and $\cos^2 \theta + \sin^2 \theta = 1$, we can show (a lot of algebra): 
@@ -425,15 +424,22 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
 
     \subsection{Results}
 
-        \paragraph*{} From Example \#1 we have solution plots and an error comparison from four runs. Each took the same initialization parameters, other than the choice of iterative solver. (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+        \paragraph*{} From Example \#1 we have solution plots and an error comparison from four runs. Each took the same initialization parameters, other than the choice of iterative solver. (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) MG was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
 
         \begin{figure}[h]
             \centering
             \includegraphics[scale=.4]{../plots/gs_sol_1d.pdf}
-            \includegraphics[scale=.4]{../plots/sor_sol_1d.pdf} \\
+            \includegraphics[scale=.4]{../plots/sor_sol_1d.pdf} 
             \includegraphics[scale=.4]{../plots/v_sol_1d.pdf}
             \includegraphics[scale=.4]{../plots/fmg_sol_1d.pdf}
+            \caption{top left (a), top right (b), bottom left (c), bottom right (d)}
         \end{figure}
+
+        The error on each plot is interesting, specifically notice the order on the y-axis. Here is the error from each run as a function of effective iteration\footnote{Effective iteration counts the exact number of iteratations when only solving with iterative solvers, but only counts the sweeps on the finest grid when using multigrid.This is justified because by comparison the sweeps on the coarse grids are cheap.} We notice in the bottom plot how much faster the multigrid methods are than the regular iterative solvers. Additionally the error plot explains why in the above plots MG and FMG look so similar -- they have both reached the plateaus in their error. It is not that one method is more accurate in absolute terms, but rather that they converge in many fewer sweeps of the iterative solver.
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.75]{../plots/error_1d.pdf}
+        \end{figure}      
 
 
 \section{Two Dimensional Problem}
@@ -448,27 +454,29 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
     
     The values of $f(x, y)$, $\Omega$, and $g(x, y)$ are specified below for the test example. \\
     \begin{itemize}
-        \item Example \#1: 
+        \item Example \#2: 
             \begin{equation*}
-                f(x) = -\sin(x) ~ , ~~ a = 0 ~ , ~~ b = 2 \pi ~ , ~~ \alpha = \beta = 0
+            \begin{aligned}
+                f(x, y) =& -\frac12\sin(x)\sin(y) ~, ~~ g(x, y) = 0 \\
+                \Omega &= [0, 2\pi] \times [0, 2\pi]
+            \end{aligned}
             \end{equation*}
 
     \end{itemize}
     The results of our method are presented in the Results section, however we will describe the implementation in the next section first. The analytic solution to this ODE is not a difficult one to derive, and we will not show the derivation here, but we state that the solution is: $$ u(x) = \sin(x) $$
 
     \subsection{Results}
-        \paragraph*{}
-
+        \paragraph*{} From Example \#2 we have solution plots and an error comparison from four runs, jsut like before: (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+        
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.5]{../plots/gs_sol_2d.pdf} \\
+            \includegraphics[scale=.5]{../plots/sor_sol_2d.pdf} \\
+            \includegraphics[scale=.5]{../plots/v_sol_2d.pdf} \\ 
+            \includegraphics[scale=.5]{../plots/fmg_sol_2d.pdf} 
+        \end{figure}
+        
 \section{Error Analysis}
-    
-    \subsection{Multigrid}   
-        \paragraph*{}
-
-    \subsection{Gauss-Seidel}
-        \paragraph*{}
-
-    \subsection{Successive Over Relaxation}
-        \paragraph*{}
 
 \section{Conclusion}
 
