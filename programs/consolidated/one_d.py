@@ -65,9 +65,17 @@ for i in range(10):
 # Plotting
 #-----------------------
 gs_grid.plot(u_true, plot_error=True)
+plt.savefig('../../plots/gs_sol_1d.pdf')
+
 sor_grid.plot(u_true, plot_error=True)
+plt.savefig('../../plots/sor_sol_1d.pdf')
+
 v_grid.plot(u_true, plot_error=True)
+plt.savefig('../../plots/v_sol_1d.pdf')
+
 fmg_grid.plot(u_true, plot_error=True)
+plt.savefig('../../plots/fmg_sol_1d.pdf')
+
 
 fig = plt.figure()
 axes = fig.add_subplot(1,1,1)
@@ -82,5 +90,6 @@ plt.ylabel('error')
 
 # Show or Save?
 # plt.show()
+plt.savefig('../../plots/error_1d.pdf')
 
 
