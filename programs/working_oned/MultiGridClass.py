@@ -16,8 +16,9 @@ import seaborn as sns
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy.sparse as sparse
-
+from scipy.interpolate import interp1d
 from getMatrices import get_T, get_R, get_Tint, get_Rint
+
 
 def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
         ''' Approximiating u system Au = rhs using an iterative method
@@ -42,6 +43,52 @@ def iterative_solver(u, rhs, dx, num_iterations=1, method='GS'):
                     u_gs = 0.5 * (u[i-1] + u[i+1] - dx**2 * rhs[i])    
                     u[i] = u[i] + omega * (u_gs - u[i])
         return u
+def full_multi_grid(u, A, rhs, dx, level, domain,
+                        num_pre=2, num_post=2, method='GS'):
+    
+    # base case
+    if level == 2:
+        u[1:-1] = np.linalg.solve(A, rhs[1:-1] )
+        return u 
+    
+    u_temp = u.copy()
+    
+    R_int = get_Rint(len(A[::2]) - 1)
+    T_int = get_Tint(len(A[::2]) - 1)
+
+    R = get_R(len(rhs) / 2 + 1 )
+
+    # smaller A and bigger A matrix is just A 
+    A_small = np.dot(R_int, np.dot(A, T_int)) #RAT 
+
+    rhs_small = R.dot(rhs)
+    u_small = R.dot(u_temp)
+
+    #print('u_small[0] == u_temp[0]: ', u_small[0] == u_temp[0])
+
+    # recursive call, terminates by changing level variable
+    u_temp = full_multi_grid(u_small, A_small, rhs_small, 2*dx, level-1, domain,
+                    num_pre=num_pre, num_post=num_post, method=method)
+
+    T = get_T(len(u_temp))
+
+
+    # np.interp??? cubic would be fun 
+    #u_interp = T.dot(u_temp)
+    x = np.arange(domain[0], domain[1]+2.0*dx, 2.0*dx)
+    
+    #x = x.reshape((len(x),1))
+    #u_temp = u_temp.reshape((len(u_temp),1))    
+    
+    u_interp_func = interp1d(x, u_temp, kind=3)
+
+    u_interp = u_interp_func( np.arange(domain[0], domain[1]+dx, dx) )
+    # print('u_interp[0] == u_temp[0]: ', np.allclose(u_interp[-1], u_temp[-1]))
+
+    return v_sched(u_interp, A, rhs, dx, level=level)
+
+
+
 
 def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
     ''' Approximiating u system Au = rhs using multigrid techniques
@@ -59,14 +106,14 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
         u[1:-1] = np.linalg.solve(A, rhs[1:-1])
         return u
     
-    # -----------------
+    # ----------------------------------
     # Relax on Au = rhs (num_pre)
-    # -----------------
+    # ----------------------------------
     u = iterative_solver(u, rhs, dx, num_iterations=num_pre, method='GS')
     
-    # -----------------
+    # ----------------------------------
     # Solve defect eq for residue
-    # -----------------
+    # ----------------------------------
     residue = np.zeros(len(rhs))
     residue[1:-1] = rhs[1:-1] - np.dot(A, u[1:-1])
     R = get_R(len(residue) / 2 + 1 )
@@ -76,9 +123,9 @@ def v_sched(u, A, rhs, dx, num_pre=2, num_post=2, level=2, method='GS'):
     T_int = get_Tint(len(A[::2]) - 1)
     A = np.dot(R_int, np.dot(A, T_int)) #RAT 
 
-    # -----------------
+    # ----------------------------------
     # Get error and use to improve u
-    # -----------------
+    # ----------------------------------
     e = v_sched(np.zeros(len(residue)), A, residue, 2.0 * dx, num_pre=num_pre, num_post=num_post, level=level-1, method='GS')
     
     T = get_T(len(e))
@@ -123,7 +170,9 @@ class MultiGridClass:
         self.x = x
 
         # array: solution, U0 represents initial guess
-        self.u = U0  
+        self.u = U0 
+        self.u[0] = bc[0]
+        self.u[-1] = bc[-1]
 
         # tuple: domain endpoints (x0, x1)
         self.domain = domain
@@ -172,15 +221,57 @@ class MultiGridClass:
         A = self.A
         rhs = self.f(self.x)
         dx = self.x[1] - self.x[0]
+        rhs[0]  = rhs[0] - self.bc[0] / dx**2
+        rhs[-1] = rhs[-1] - self.bc[-1] / dx**2
+
         self.u = v_sched(u, A, rhs, dx, num_pre=num_pre, num_post=num_post, 
                             level=self.max_level, method=self.solver)
 
         self.iter_count = self.iter_count + num_pre + num_post
+    
+    def full_multi_grid(self, num_pre=2, num_post=2):
+        '''
+        calls full_multi_grid() defined above to run the full 
+        multigrid cycle
+        '''
+
+        max_level = self.max_level
+        u = self.u.copy()
+        A = self.A
+        rhs = self.f(self.x)
+        dx = self.x[1] - self.x[0]
+
+        # # add boundary conditions?
+        # dx_coarse  = dx.copy()
+        # A_coarse   = A.copy()
+        # new_rhs_coarse = rhs.copy()
+
+        # # coarsen all the way to the coarsest mesh 
+        # for level in range(max_level):
+        #     old_rhs_coarse = new_rhs_coarse.copy()
+        #     new_rhs_coarse = np.zeros( len(rhs)/2 + 1 ) 
+
+        #     dx_coarse = 2.0*dx_coarse
+        #     R_int = get_Rint(len(A[::2]) - 1)
+        #     new_rhs_coarse[1:-1] = R_int.dot(old_rhs_coarse[1:-1])
+        #     T_int = get_Tint(len(A[::2]) - 1)
+        #     A_coarse = np.dot(R_int, np.dot(A_coarse, T_int)) #RAT 
+    
+        # now we have the parameters for the coarsest mesh 
+
+        self.u = full_multi_grid(u, A, rhs, dx, self.max_level, self.domain,
+                            num_pre=num_pre, num_post=num_post, method=self.solver)
+
+    
+        # need to do something about iteration count 
+        self.plot_title='FMG'
+
 
     def iterate(self, num=2):
-        ''' Calls v_sched() defined above to approximate
-        self.u using multigrid techniques with coarse grid 
-        correction scheme.'''
+        ''' 
+        Calls iterate_solver() defined above to approximate
+        self.u 
+        '''
         
         # used for plotting
         self.plot_title = 'iterative'

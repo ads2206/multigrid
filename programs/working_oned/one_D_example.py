@@ -15,10 +15,11 @@ from matplotlib import pyplot as plt
 
 
 # Problem setup
-m = 17
-domain = (0.0, 2.0 * np.pi)
+m = 2**9+1
+domain = (0.0, 2.0*np.pi)
 x = np.linspace(domain[0], domain[1], m)
 U0 = np.zeros(m)
+#U0 = np.sin(np.pi*x)
 u_true = lambda x: np.sin(x)
 f = lambda x: - np.sin(x)
 
@@ -34,14 +35,27 @@ f = lambda x: - np.sin(x)
 # u_true = lambda x: np.exp(x)
 
 
-mg_grid = MultiGridClass(x, U0, domain, f, solver='GS')
+fmg_grid = MultiGridClass(x, U0, domain, f, solver='GS')
 static_grid = MultiGridClass(x, U0, domain, f, solver='GS')
-mg_grid.plot(u_true, plot_error=True)
 
-mg_grid.v_sched()
-static_grid.iterate(4)
+# plot the initial guess because it is plotting 'self.u' which 
+# gets initialized to U0 the guess
+fmg_grid.plot(u_true, plot_error=True)
 
-static_grid.plot(u_true, plot_error=True)
+# for v-schedule only 
+mg_grid = MultiGridClass(x, U0, domain, f, solver='GS')
+
+
+
+for i in range(1):
+	mg_grid.v_sched()
+	static_grid.iterate(4)
+	# for FMG 
+	fmg_grid.full_multi_grid()
+
+
+#static_grid.plot(u_true, plot_error=True)
 mg_grid.plot(u_true, plot_error=True)
+fmg_grid.plot(u_true, plot_error=True)
 
 plt.show()
