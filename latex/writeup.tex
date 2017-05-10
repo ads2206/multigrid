@@ -53,9 +53,7 @@ derive residual equation, and the role of the residual equations
 
 [insert diagram of a V cycle]
 
-Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  
-
-We will adopt the same notation that Briggs introduces. $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $I_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
+Transitions from one discretization to another discretization require a mapping of some kind from the current approximation of the true solution or vector to the same vector on the next mesh.  We will adopt the same notation that Briggs introduces. $\Omega^{h}$ represents a grid with spacing $h = \Delta x $, and naturally $\Omega^{2h}$ represents a coarser grid.   $\mathbf{v}^h$ is an approximation of the true solution $\mathbf{u}^h$, and therefore error is $\mathbf{e}^h = \mathbf{u}^h - \mathbf{v}^h$.  The interpolation matrix maps a vector on a coarse mesh, say $\Omega^{2h}$ to $\Omega^{h}$ and is denoted $T_{2h}^h$, while the restriction matrix maps a vector from $\Omega^{h} \rightarrow \Omega^{2h}$ and is denoted by $R_h^{2h}$.  
 
 Assuming, we have $N+1$ total points in our boundary, and $N-1$ interior points, then the restriction matrix $R_h^{2h}$ maps $\mathbb{R}^{N-1} \rightarrow \mathbb{R}^{N/2 -1}$.  Since we have $N-1$ unknown values and are mapping to a lower dimension subspace, then the rank of our restriction matrix is $\frac{N}{2} -1 $ and the null space of the restriction matrix is $\frac{N}{2}$.  Let us explore how this matrix transforms the eigenvalues of our iterative matrix $A^h$ on mesh $\Omega^h$.  The eigenvectors or modes of $A^h$ are given by 
 $$\mathbf{w}_{k}^h = \left( \sin\left( \frac{k \pi}{N}\right), \dots, \sin\left( \frac{(N-1)k \pi}{N}\right) \right)$$ where the jth component of the vector is $w_{k,j}^h = \sin\left( \frac{jk \pi}{N}\right)$.  When the restriction operator is applied directly to these vectors we get: 
@@ -96,10 +94,11 @@ $$
 w_{N-k, j}^h = \sin \left( \frac{j (N - k) \pi}{N} \right) = \sin\left( j\pi - \frac{jk \pi}{N}\right)
 $$
 
-$$
+\begin{equation}
 \sin(j \pi) \cos \left( \frac{jk \pi}{N} \right) - \cos(j \pi) \sin\left( \frac{jk \pi}{N} \right) =  (-1)^{j+1}\sin\left( \frac{jk \pi}{N} \right) = (-1)^{j+1} w_{k, j}^h
-$$
+\end{equation}
 
+INCLUDE IMAGE OF COMPLEMENTARY PAIRS
 
 Of course, this two element to one element mapping means that $R_h^{2h}$ contains non-trivial elements in its null space.  Let's take the unit vector $\mathbf{e}_i^h$ on $\Omega^h$, and see how it gets transformed by $R_h^{2h}$.  
 
@@ -133,20 +132,168 @@ R_h^{2h}A^h \mathbf{e}_i^h =  -\frac 1 4 \left( 2 \mathbf{e}_{\frac{i-1}{2}}^{2h
 We see that the vectors $\mathbf{n}_i = A^h \mathbf{e}_i^h$ when $i$ is odd form the basis of the null space of the full weighting operator.  The null space contains both smooth and oscillatory modes of $A^h$ because the vector $A^h \mathbf{e}_i^h$, which is a vector in the range of $A^h$, can be decomposed as a linear combination of the eigenvectors mentioned above.  
 
 
+Turning our attention to the interpolation matrix, $T_{2h}^h$, which has a reverse mapping from $\mathbb{R}^{N/2 - 1} \rightarrow \mathbb{R}^{N-1}$ and has full rank because there are fewer columns than rows. Like before, we want to ask how this matrix affects the eigenvectors or modes of matrix $A^{2h}$.  Note that this time, we are considering matrix $A^{2h}$ to be consistent with the analysis in restriction.  We know that the jth component of the kth eigenvector of $A^{2h}$ is: 
+
+$$
+w_{k,j}^{2h} = \sin \left( \frac{jk \pi}{N /2 } \right) \text{ where } 1 \leq k \leq \frac N 2 \text{ and } 0 \leq j \leq \frac N 2
+$$
+The jth component of $T_{2h}^h \mathbf{w}_{k}^{2h}$ looks like: 
+
+$$ 
+T_{2h}^h \mathbf{w}_k^{2h} = \frac 1 2 \begin{bmatrix} 1 \\ 2 \\ 1 & 1 \\ & 2 \\ & 1 & 1 \\ & & \ddots & \ddots  \end{bmatrix} \mathbf{w}_k^{2h}
+$$
+
+$$
+( T_{2h}^h \mathbf{w}_k^{2h} )_j = 
+\begin{cases}
+ \sin\left( \frac{ k(j / 2) \pi }{N/2} \right) ~~ j \text{ even}\\
+\frac 1 2 \sin \left( \frac{k \frac{j-1}{2} \pi}{N/2} \right) + \frac 1 2 \sin \left( \frac{k \frac{j+1}{2}\pi}{N/2} \right) ~~ j \text{ odd}
+\end{cases}
+$$
+
+For j odd we have: 
+$$
+( T_{2h}^h \mathbf{w}_k^{2h} )_j = \frac 1 2 \sin \left( \frac{k (j-1) \pi}{N} \right) + \frac 1 2 \sin \left( \frac{k (j+1)\pi}{N} \right)
+$$
+
+Using the trigonemtric sum identity and double angle cosine identity $2 \cos^2 \theta -1 = \cos 2 \theta $, we get that for the $j$ is odd case: 
+
+$$ \Rightarrow
+\sin \left( \frac{kj \pi}{N}\right) \cos \left( \frac{k \pi}{N}\right) = \sin \left( \frac{kj \pi}{N}\right)  \left(2 \cos^2 \left( \frac{k \pi}{2N} \right)  - 1  \right) 
+$$
+$$ \Rightarrow
+\sin \left( \frac{kj \pi}{N}\right) \cos^2 \left( \frac{k \pi}{2N} \right) + \sin \left( \frac{kj \pi}{N}\right) \left( \cos^2 \left( \frac{k \pi}{2N} \right) - 1\right) \text{ and we have } k = N - k'$$ 
+
+$$ \Rightarrow 
+\sin \left( \frac{kj \pi}{N}\right) \cos^2 \left( \frac{k \pi}{2N} \right) - \sin \left( \frac{(N-k')j \pi}{N}\right) \sin^2 \left( \frac{k \pi}{2N} \right)
+$$
+
+$$ \Rightarrow
+\sin \left( \frac{kj \pi}{N}\right) \cos^2 \left( \frac{k \pi}{2N} \right)  - \sin^2 \left( \frac{k \pi}{2N} \right) \left[ \sin(j \pi) \cos \left( \frac{k' j \pi}{N}\right) - \cos( j \pi) \sin \left( \frac{k' j \pi}{N}\right)\right]
+$$
+
+$$\Rightarrow
+\sin \left( \frac{kj \pi}{N}\right) \cos^2 \left( \frac{k \pi}{2N} \right)  -\sin^2 \left( \frac{k \pi}{2N} \right)  \left[ (-1)^{j+1} \sin \left( \frac{k' j \pi}{N}\right) \right] \text{ and because j is odd ... }
+$$
+
+\begin{equation}
+\cos^2 \left( \frac{k \pi}{2N} \right) \sin \left( \frac{kj \pi}{N}\right)  -\sin^2 \left( \frac{k \pi}{2N} \right) \sin \left( \frac{k' j \pi}{N}\right)
+\end{equation}
+
+For the even case, we can do the following: 
+
+$$
+( T_{2h}^h \mathbf{w}_k^{2h} )_j = \sin\left( \frac{ k j \pi }{N} \right) = \cos^2 \left( \frac{k \pi}{2N} \right) \sin\left( \frac{ k j \pi }{N} \right) + \sin^2 \left( \frac{k \pi}{2N} \right) \sin\left( \frac{ k j \pi }{N} \right)
+$$
+
+In the previous page we showed that complementary nodes are related by just a sign.  Using this we can turn the above expression to take on a similar form. Just like Briggs, we'll define $c_k = \cos^2 \left( \frac{k \pi}{2N} \right)$ and $s_k = \sin^2 \left( \frac{k \pi}{2N} \right)$.  Therefore, for both the even and odd case we can express the new eigenvectors as:  
+
+\begin{equation}
+[T_{2h}^h \mathbf{w}_k^{2h}]_j =  \cos^2 \left( \frac{k \pi}{2N} \right) \sin\left( \frac{ k j \pi }{N} \right) - \sin^2 \left( \frac{k \pi}{2N} \right) \sin\left( \frac{ k j \pi }{N} \right) 
+\Rightarrow 
+ T_{2h}^h \mathbf{w}_k^{2h} = c_k \mathbf{w}_k^h - s_k \mathbf{w}_k^h
+\end{equation}
+
+The takeaway of all this tedious, trigonemtric algebra is that the interpolation matrix in some way excistes the kth mode in $\Omega^{2h}$ to produce two modes on the finer mesh $\Omega^h$.  
+
+A basis for the range of interpolation is of course given by the columns of $T_{2h}^h$ because it is full rank (all of its columns are linearly independent).  Just like the null space of the restriction matrix, these basis vectors can be decomposed as a linear combination of the modes of $A^h$ and hence reveal that the column space of the interpolation matrix contains both smooth and oscillatory nodes of $A^h$ (see Briggs).  
+
+The purpose of all this analysis on these two matrices subspaces and their affect on the modes of $A^h$ is because the crux of multigrid methods is the \textit{coarse grid correction scheme}.  This scheme is a residual correction scheme that maps the residual of n iterative method on some mesh $\Omega^h$ to a coarser mesh to solve for error.  This error is then interpolated upwards to obtain a better approximation.  Essentially, coarse grid correction (CGC) is a series of matrix products.  
+\begin{enumerate}
+\item We start with an approximation, $\mathbf{v}^h$ to our true solution, $\mathbf{u}^h$ and relax $\nu$ times. $\mathbf{v}^h \leftarrow P^{ \nu} \mathbf{v}^h $, where $P$ is a relaxation scheme
+
+\item Obtain a residual $\mathbf{r}^h$ and restrict it: $ \mathbf{r}^{2h}  = R_h^{2h} ( \mathbf{f}^h -  A^h \mathbf{v}^h )$
+
+\item Solve the residual equation: $\mathbf{v}^{2h} = (A^{2h})^{-1} \mathbf{f}^{2h} $
+
+\item Correct the approximation on the original mesh $\Omega^h$: $\mathbf{v}^h \leftarrow \mathbf{v}^h + T_{2h}^h \mathbf{v}^{2h} $
+\end{enumerate}
+
+These 4 steps can be summarized as a series of matrix products: 
+
+\begin{equation}
+\mathbf{v}^h \leftarrow P^{\nu} \mathbf{v}^h + T_{2h}^h (A^{2h})^{-1} R_h^{2h} ( \mathbf{f}^h -  A^h P^{\nu} \mathbf{v}^h )
+\end{equation}
+Naturally, this must statisfy: 
+
+\begin{equation}
+\mathbf{u}^h = P^{\nu} \mathbf{u}^h + T_{2h}^h (A^{2h})^{-1} R_h^{2h} ( \mathbf{f}^h -  A^h P^{\nu} \mathbf{u}^h )
+\end{equation}
+Taking their difference and considering this difference as the coarse grid correction operator (as Brigsgs does, page 74), we get a matrix operator: 
+
+\begin{equation}
+\left[ I - T_{2h}^h (A^{2h})^{-1} R_h^{2h} A^h \right] P^{\nu}
+\end{equation}
+
+Considering this whole series of products and sums as one operation, Briggs states that in the scenario in which we do not relax, $\nu = 0$, then the subspaces $W_k^h = \text{span} \{w_k^h, w_{k'}^h \}$ is an invariant subspace.  
 
 
+We will endeavour to prove this.  Without any relaxation, our operator is: 
 
+$$
+I - T_{2h}^h (A^{2h})^{-1} R_h^{2h} A^h
+$$
+In a homework problem, we found that kth eigenvalue of the matrix $A^h$ is $\lambda_k^h = 4 \sin^2 \left( \frac{k \pi}{2N} \right)$.  We therefore have: 
 
-include image of pair of complemenatary modes on a certain grid
+\begin{enumerate} 
+\item $ A^h \mathbf{w}_k^h = \lambda_k^h \mathbf{w}_k^h$
+\item $ R_j^{2h}A^h \mathbf{w}_k^h  = \lambda_k^h \cos^2 \left( \frac{k \pi}{2N}\right) \mathbf{w}_k^h $
+\item $ (A^{2h} )^{-1} R_j^{2h}A^h \mathbf{w}_k^h = \lambda_k^h \cos^2 \left( \frac{k \pi}{2N}\right) (A^{2h})^{-1} \mathbf{w}_k^{2h} = \frac{\lambda_k^h}{\lambda_k^{2h}} \cos^2\left( \frac{k \pi}{2N}\right)\mathbf{w}_k^{2h}$
 
+\item $T_{2h}^h(A^{2h} )^{-1} R_j^{2h}A^h \mathbf{w}_k^h =  \frac{\lambda_k^h}{\lambda_k^{2h}} \cos^2\left( \frac{k \pi}{2N}\right) T_{2h}^h \mathbf{w}_k^{2h} =
+\frac{\lambda_k^h}{\lambda_k^{2h}} \cos^2\left( \frac{k \pi}{2N}\right) \left[ c_k \mathbf{w}_k^h - s_k \mathbf{w}_{k'}^h \right]$
+\item Our final expression for the change on $\mathbf{w}_k^h$ by this coarse grid correction operator is: 
 
-analysis on interpolation operator here
+$$
+\mathbf{w}_k^h - \frac{\lambda_k^h}{\lambda_k^{2h}} \cos^2\left( \frac{k \pi}{2N}\right) \left[ c_k \mathbf{w}_k^h - s_k \mathbf{w}_{k'}^h \right]
+$$ 
 
+\end{enumerate}
 
+Plugging in our eigenvalues into this, we obtain: 
 
+\begin{equation}
+\mathbf{w}_k^h  - \frac{4 \sin^2 \left( \frac{k \pi}{2N} \right)}{4 \sin^2 \left( \frac{k \pi}{N} \right)} \cos^2\left( \frac{k \pi}{2N}\right) \left[ c_k \mathbf{w}_k^h - s_k \mathbf{w}_{k'}^h \right]
+\end{equation}
 
+\begin{equation}
+\left(1 - \frac{ \sin^2 \left( \frac{k \pi}{2N} \right) \cos^4\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right)}  \right)\mathbf{w}_k^h  + 
+\frac{ \sin^4 \left( \frac{k \pi}{2N} \right) \cos^2\left( \frac{k \pi}{2N}\right) }{ \sin^2 \left( \frac{k \pi}{N} \right) }  \right)\mathbf{w}_{k'}^h
+\end{equation}
 
+Using the double angle formula  $\sin 2 \theta = 2\sin \theta \cos \theta $ and $\cos^2 \theta + \sin^2 \theta = 1$, we can show (a lot of algebra): 
 
+$$
+\left( 1 -  \frac{\cos^2 \left( \frac{k \pi}{2N}\right)}{4} \right) \mathbf{w}_k^h + \frac 1 4 \sin^2 \left( \frac{k \pi}{2N} \right) \mathbf{w}_{k'}^h
+$$
+
+$$\Rightarrow
+\left( \frac 3 4 + \frac 1 4 \sin^2\left( \frac{k \pi}{2N}\right) \right) \mathbf{w}_k^h + \frac 1 4 \sin^2 \left( \frac{k \pi}{2N}\right) \mathbf{w}_{k'}^h
+$$
+
+If we continue and expand things out, we can show this equals to, $s_k \mathbf{w}_k + s_k w_{k'}$ and hence we obtain invariance of the elemtn $\mathbf{w}_k$.  We need to do this for the element $\mathbf{w}_{k'}$.  To avoid the same type of analysis, we'll rely on Briggs to assert that we get $c_k \mathbf{w}_k + c_k \mathbf{w}_{k'}$.  What this means is that we get smooth and oscillatory results when this coarse grid correction scheme is applied to these complementary modes.  
+
+The power of this method comes from the spectral properties of iterative solvers.  When we introduce $\nu$ steps of relaxation of some iterative method, like Gauss-Seidel or SOR, then we get that our new operator becomes:
+
+\begin{equation}
+\left( I - T_{2h}^h (A^{2h})^{-1} R_h^{2h} A^h \right) P^{\nu}
+\end{equation}
+
+Note, 
+Following the same 5 steps above, we get that (letting $\lambda_k$ be the eigenvalue of P associated with the kth eigenvector $\mathbf{w}_k$)
+
+$$
+\left(I - T_{2h}^h (A^{2h})^{-1} R_h^{2h} A^h \right) P^{\nu} \mathbf{w}_k^h = \left(I - T_{2h}^h (A^{2h})^{-1} R_h^{2h} A^h \right) \lambda^{\nu}_k  \mathbf{w}_k^h
+$$
+
+What is new this time is a constant term - the eigenvalue! So we get similar results!  The coarse grid correction scheme when operating on $\mathbf{w}_k$ and $\mathbf{w}_{k'}$ returns:
+
+$$
+\lambda_k^{\nu} s_k \mathbf{w}_k + \lambda_k^{\nu} s_k \mathbf{w}_{k'} \text{ and } \lambda_k^{\nu}c_k \mathbf{w}_k
++ \lambda_k^{\nu} c_k \mathbf{w}_{k'} ~~~ \text{where } 1 \leq k \leq \frac N 2, ~~ k' = N-k
+$$
+
+The smoothing is the dominant term here! It is what makes the oscillatory modes small, while at the same time eliminating smooth modes, reflected in the $s_k$ terms. When all terms are small particularyly for small modes $k$ relative to $N/2$ or when the number of relaxation increases, the end result is a complete process where both types of eigenvectors (low frequency and high frequency modes) are well damped. This is the spectral picture of the multigrid method
 
 
 
