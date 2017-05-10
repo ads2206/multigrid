@@ -383,15 +383,22 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
 
     \subsection{Results}
 
-        \paragraph*{} From Example \#1 we have solution plots and an error comparison from four runs. Each took the same initialization parameters, other than the choice of iterative solver. (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) V-Grid was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
+        \paragraph*{} From Example \#1 we have solution plots and an error comparison from four runs. Each took the same initialization parameters, other than the choice of iterative solver. (a) GS was computed using only the Gauss-Seidel iteration method; (b) SOR was only using the SOR method; (c) MG was a coarse grid correction cycle method using \lstinline{v_sched()}, above; and (d) FMG was using the Full Multi Grid Cycle outlined above in \lstinline{fmg()}. Below are the solutions and error plots:
 
         \begin{figure}[h]
             \centering
             \includegraphics[scale=.4]{../plots/gs_sol_1d.pdf}
-            \includegraphics[scale=.4]{../plots/sor_sol_1d.pdf} \\
+            \includegraphics[scale=.4]{../plots/sor_sol_1d.pdf} 
             \includegraphics[scale=.4]{../plots/v_sol_1d.pdf}
             \includegraphics[scale=.4]{../plots/fmg_sol_1d.pdf}
+            \caption{top left (a), top right (b), bottom left (c), bottom right (d)}
         \end{figure}
+
+        The error on each plot is interesting, specifically notice the order on the y-axis. Here is the error from each run as a function of effective iteration\footnote{Effective iteration counts the exact number of iteratations when only solving with iterative solvers, but only counts the sweeps on the finest grid when using multigrid.This is justified because by comparison the sweeps on the coarse grids are cheap.} We notice in the bottom plot how much faster the multigrid methods are than the regular iterative solvers. Additionally the error plot explains why in the above plots MG and FMG look so similar -- they have both reached the plateaus in their error. It is not that one method is more accurate in absolute terms, but rather that they converge in many fewer sweeps of the iterative solver.
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=.75]{../plots/error_1d.pdf}
+        \end{figure}      
 
 
 \section{Two Dimensional Problem}
@@ -429,15 +436,6 @@ The smoothing is the dominant term here! It is what makes the oscillatory modes 
         \end{figure}
         
 \section{Error Analysis}
-    
-    \subsection{Multigrid}   
-        \paragraph*{}
-
-    \subsection{Gauss-Seidel}
-        \paragraph*{}
-
-    \subsection{Successive Over Relaxation}
-        \paragraph*{}
 
 \section{Conclusion}
 
